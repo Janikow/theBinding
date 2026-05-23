@@ -1,0 +1,15 @@
+# render.yaml — drop this in your repo root.
+# On Render: New → Blueprint → connect your GitHub repo → done.
+
+services:
+  - type: web
+    name: ultraproxy
+    env: node
+    region: oregon            # Change to: ohio, singapore, frankfurt, or virginia
+    plan: free                # free | starter | standard
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production

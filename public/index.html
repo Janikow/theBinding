@@ -2,756 +2,267 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>UltraProxy — Browse Freely</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>UP — Web Proxy</title>
 <style>
-/* ── Reset & Variables ───────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg:        #080a0f;
-  --surface:   #0e1118;
-  --surface2:  #161921;
-  --border:    #1e222e;
-  --border2:   #262b38;
-  --yellow:    #f7c948;
-  --yellow2:   #ffe17a;
-  --cyan:      #00e5c8;
-  --red:       #ff4060;
-  --green:     #2ddc72;
-  --text:      #dde2ed;
-  --muted:     #4a5168;
-  --muted2:    #6b7490;
-  --mono:      'JetBrains Mono', monospace;
-  --display:   'Bebas Neue', sans-serif;
-  --body:      'DM Sans', sans-serif;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000;
+  --s1:#0a0a0a;
+  --s2:#111;
+  --s3:#1a1a1a;
+  --b1:#222;
+  --b2:#333;
+  --t1:#fff;
+  --t2:#999;
+  --t3:#555;
+  --accent:#fff;
+  --green:#22c55e;
+  --red:#ef4444;
+  --yellow:#eab308;
 }
+html{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+button,input{font-family:inherit}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--body);
-  min-height: 100vh;
-  overflow-x: hidden;
+/* ── Header ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:52px;border-bottom:1px solid var(--b1);
+  position:sticky;top:0;z-index:100;background:rgba(0,0,0,.85);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
 }
+.logo{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.logo span{color:var(--t3);font-weight:400;margin-left:4px;font-size:13px}
+nav{display:flex;gap:20px;align-items:center}
+nav a{font-size:13px;color:var(--t3);transition:color .15s}
+nav a:hover{color:var(--t1)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
 
-/* ── Noise texture overlay ───────────────────────────────── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  opacity: .35;
+/* ── Hero ── */
+.hero{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:80px 20px 60px;text-align:center;
 }
+h1{font-size:clamp(40px,8vw,80px);font-weight:700;letter-spacing:-2px;line-height:1;margin-bottom:16px}
+h1 span{color:var(--t3)}
+.sub{font-size:15px;color:var(--t3);max-width:360px;line-height:1.6;margin-bottom:48px}
 
-/* ── Grid lines ──────────────────────────────────────────── */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image:
-    linear-gradient(rgba(247,201,72,.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(247,201,72,.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+/* ── Input bar ── */
+.bar{
+  width:100%;max-width:600px;
+  display:flex;align-items:center;
+  background:var(--s2);border:1px solid var(--b2);border-radius:12px;
+  transition:border-color .2s,box-shadow .2s;
+  overflow:hidden;
 }
-
-/* ── Header ──────────────────────────────────────────────── */
-header {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 40px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(8,10,15,.8);
-  backdrop-filter: blur(12px);
+.bar:focus-within{border-color:var(--b2);box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+.bar input{
+  flex:1;background:transparent;border:none;outline:none;
+  padding:14px 16px;font-size:15px;color:var(--t1);
+  font-family:'SF Mono','Fira Mono','JetBrains Mono',monospace;
+  letter-spacing:-.2px;
 }
-
-.logo {
-  font-family: var(--display);
-  font-size: 28px;
-  letter-spacing: 2px;
-  color: var(--yellow);
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.bar input::placeholder{color:var(--t3)}
+.bar button{
+  background:var(--t1);color:#000;border:none;
+  padding:10px 20px;margin:6px;border-radius:8px;
+  font-size:13px;font-weight:700;cursor:pointer;
+  transition:background .15s,transform .1s;white-space:nowrap;
 }
+.bar button:hover{background:#e5e5e5}
+.bar button:active{transform:scale(.96)}
 
-.logo-bolt {
-  display: inline-block;
-  animation: flicker 4s infinite;
+/* ── Quick links ── */
+.pills{
+  display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:20px;
 }
-
-@keyframes flicker {
-  0%, 95%, 100% { opacity: 1; }
-  96% { opacity: 0.4; }
-  97% { opacity: 1; }
-  98% { opacity: 0.2; }
-  99% { opacity: 1; }
+.pill{
+  font-size:12px;color:var(--t3);background:var(--s2);
+  border:1px solid var(--b1);border-radius:20px;padding:5px 13px;
+  cursor:pointer;transition:all .15s;
 }
+.pill:hover{color:var(--t1);border-color:var(--b2);background:var(--s3)}
 
-nav {
-  display: flex;
-  gap: 28px;
-  align-items: center;
+/* ── Stats row ── */
+.stats{
+  display:flex;gap:40px;margin-top:56px;padding-top:40px;
+  border-top:1px solid var(--b1);
 }
+.stat{text-align:center}
+.stat-val{font-size:28px;font-weight:700;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.stat-lbl{font-size:11px;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:.8px}
 
-nav a {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--muted2);
-  text-decoration: none;
-  letter-spacing: .5px;
-  transition: color .2s;
+/* ── Divider ── */
+.divider{
+  display:flex;align-items:center;gap:16px;
+  padding:0 24px;margin:0;color:var(--t3);font-size:11px;
+  text-transform:uppercase;letter-spacing:1.5px;
 }
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--b1)}
 
-nav a:hover { color: var(--yellow); }
-
-.nav-badge {
-  background: var(--yellow);
-  color: #000;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 3px;
-  letter-spacing: 1px;
+/* ── Activity ── */
+.section{padding:40px 24px;max-width:900px;margin:0 auto;width:100%}
+.section h2{font-size:13px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:20px}
+.log{display:flex;flex-direction:column;gap:1px}
+.log-row{
+  display:grid;grid-template-columns:1fr 48px 72px 58px 80px;gap:12px;
+  align-items:center;padding:10px 14px;border-radius:8px;
+  transition:background .1s;font-size:12px;
+  font-family:'SF Mono','Fira Mono','JetBrains Mono',monospace;
 }
+.log-row:hover{background:var(--s2)}
+.log-url{color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.log-url:hover{color:var(--t1)}
+.log-status{text-align:right}
+.s2{color:var(--green)}.s3{color:#60a5fa}.s4{color:var(--yellow)}.s5{color:var(--red)}
+.log-size,.log-ms,.log-time{color:var(--t3);text-align:right}
+.empty{color:var(--t3);font-size:13px;text-align:center;padding:40px 0}
 
-/* ── Hero ────────────────────────────────────────────────── */
-.hero {
-  position: relative;
-  z-index: 1;
-  min-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px 40px;
-  text-align: center;
-  overflow: hidden;
+/* ── Footer ── */
+footer{
+  border-top:1px solid var(--b1);padding:20px 24px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;color:var(--t3);
 }
+footer a:hover{color:var(--t1)}
 
-/* Radial glow behind hero */
-.hero::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -55%);
-  width: 700px;
-  height: 700px;
-  background: radial-gradient(circle, rgba(247,201,72,.07) 0%, transparent 65%);
-  pointer-events: none;
-}
+/* ── Error msg ── */
+.err{color:var(--red);font-size:12px;margin-top:8px;height:16px;transition:opacity .2s}
+.err.hide{opacity:0}
 
-.hero-eyebrow {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--yellow);
-  margin-bottom: 22px;
-  opacity: 0;
-  animation: fadeUp .6s .1s ease forwards;
-}
-
-.hero-title {
-  font-family: var(--display);
-  font-size: clamp(72px, 12vw, 140px);
-  letter-spacing: 4px;
-  line-height: .92;
-  color: var(--text);
-  margin-bottom: 12px;
-  opacity: 0;
-  animation: fadeUp .7s .2s ease forwards;
-}
-
-.hero-title span { color: var(--yellow); }
-
-.hero-sub {
-  font-family: var(--body);
-  font-size: 18px;
-  font-weight: 300;
-  color: var(--muted2);
-  max-width: 480px;
-  line-height: 1.6;
-  margin-bottom: 50px;
-  opacity: 0;
-  animation: fadeUp .7s .35s ease forwards;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── URL bar ──────────────────────────────────────────────── */
-.url-form {
-  width: 100%;
-  max-width: 680px;
-  opacity: 0;
-  animation: fadeUp .7s .5s ease forwards;
-}
-
-.url-wrap {
-  display: flex;
-  align-items: center;
-  background: var(--surface);
-  border: 2px solid var(--border2);
-  border-radius: 10px;
-  overflow: hidden;
-  transition: border-color .2s, box-shadow .2s;
-}
-
-.url-wrap:focus-within {
-  border-color: var(--yellow);
-  box-shadow: 0 0 0 4px rgba(247,201,72,.1), 0 8px 40px rgba(0,0,0,.4);
-}
-
-.url-scheme {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--muted);
-  padding: 0 0 0 18px;
-  white-space: nowrap;
-  user-select: none;
-}
-
-#url-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  padding: 18px 16px;
-  font-family: var(--mono);
-  font-size: 14px;
-  color: var(--text);
-  caret-color: var(--yellow);
-}
-
-#url-input::placeholder { color: var(--muted); }
-
-.url-btn {
-  background: var(--yellow);
-  color: #000;
-  border: none;
-  padding: 0 28px;
-  height: 100%;
-  min-height: 58px;
-  font-family: var(--display);
-  font-size: 18px;
-  letter-spacing: 2px;
-  cursor: pointer;
-  transition: background .15s, transform .1s;
-  white-space: nowrap;
-}
-
-.url-btn:hover  { background: var(--yellow2); }
-.url-btn:active { transform: scale(.97); }
-
-.url-hint {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 12px;
-  letter-spacing: .3px;
-}
-
-/* ── Quick links ─────────────────────────────────────────── */
-.quick-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 22px;
-  opacity: 0;
-  animation: fadeUp .6s .7s ease forwards;
-}
-
-.quick-link {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted2);
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 6px 14px;
-  cursor: pointer;
-  transition: all .15s;
-  text-decoration: none;
-}
-
-.quick-link:hover {
-  border-color: var(--yellow);
-  color: var(--yellow);
-  background: rgba(247,201,72,.06);
-}
-
-/* ── Stats ticker ────────────────────────────────────────── */
-.stats-ticker {
-  margin-top: 60px;
-  display: flex;
-  gap: 48px;
-  justify-content: center;
-  opacity: 0;
-  animation: fadeUp .6s .85s ease forwards;
-}
-
-.ticker-item {
-  text-align: center;
-}
-
-.ticker-val {
-  font-family: var(--display);
-  font-size: 36px;
-  letter-spacing: 2px;
-  color: var(--yellow);
-  line-height: 1;
-}
-
-.ticker-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-top: 5px;
-}
-
-/* ── Divider ─────────────────────────────────────────────── */
-.divider {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 0 40px;
-  margin: 0;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
-.divider-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-/* ── Features grid ───────────────────────────────────────── */
-.features {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1px;
-  background: var(--border);
-  margin: 60px 0 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-.feature {
-  background: var(--bg);
-  padding: 40px 36px;
-  transition: background .2s;
-  position: relative;
-  overflow: hidden;
-}
-
-.feature:hover { background: var(--surface); }
-
-.feature::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 3px;
-  height: 0;
-  background: var(--yellow);
-  transition: height .3s ease;
-}
-
-.feature:hover::before { height: 100%; }
-
-.feat-icon {
-  font-size: 32px;
-  margin-bottom: 18px;
-  display: block;
-}
-
-.feat-title {
-  font-family: var(--display);
-  font-size: 22px;
-  letter-spacing: 1px;
-  color: var(--text);
-  margin-bottom: 10px;
-}
-
-.feat-desc {
-  font-size: 14px;
-  font-weight: 300;
-  color: var(--muted2);
-  line-height: 1.7;
-}
-
-/* ── Recent activity ─────────────────────────────────────── */
-.section {
-  position: relative;
-  z-index: 1;
-  padding: 60px 40px;
-}
-
-.section-header {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-
-.section-title {
-  font-family: var(--display);
-  font-size: 32px;
-  letter-spacing: 2px;
-  color: var(--text);
-}
-
-.section-count {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.activity-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: var(--mono);
-  font-size: 12px;
-}
-
-.activity-table th {
-  text-align: left;
-  padding: 10px 14px;
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--muted);
-  border-bottom: 1px solid var(--border);
-}
-
-.activity-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid rgba(255,255,255,.025);
-  color: var(--text);
-}
-
-.activity-table tr:last-child td { border-bottom: none; }
-.activity-table tr:hover td { background: var(--surface); }
-
-.activity-url {
-  color: var(--cyan);
-  max-width: 380px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: block;
-  cursor: pointer;
-  text-decoration: none;
-}
-.activity-url:hover { color: var(--yellow); }
-
-.status-2 { color: var(--green); }
-.status-3 { color: var(--cyan); }
-.status-4 { color: var(--yellow); }
-.status-5 { color: var(--red); }
-
-/* ── Footer ──────────────────────────────────────────────── */
-footer {
-  position: relative;
-  z-index: 1;
-  border-top: 1px solid var(--border);
-  padding: 30px 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-}
-
-footer a { color: var(--yellow); text-decoration: none; }
-
-/* ── Responsive ──────────────────────────────────────────── */
-@media (max-width: 600px) {
-  header { padding: 16px 20px; }
-  nav { display: none; }
-  .hero-title { font-size: 56px; }
-  .stats-ticker { gap: 28px; }
-  .section { padding: 40px 20px; }
-  .features { grid-template-columns: 1fr; }
-  footer { flex-direction: column; gap: 10px; text-align: center; }
-}
-
-/* ── Scrollbar ───────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
-/* ── Error state ─────────────────────────────────────────── */
-.error-msg {
-  color: var(--red);
-  font-family: var(--mono);
-  font-size: 12px;
-  margin-top: 10px;
-  display: none;
+/* ── Responsive ── */
+@media(max-width:600px){
+  .stats{gap:24px}.stat-val{font-size:22px}
+  .log-row{grid-template-columns:1fr 40px 60px;}.log-size,.log-time{display:none}
+  nav a{display:none}
+  h1{font-size:48px}
 }
 </style>
 </head>
 <body>
 
-<!-- ── Header ────────────────────────────────────────────── -->
 <header>
-  <div class="logo">
-    <span class="logo-bolt">⚡</span> ULTRAPROXY
-  </div>
+  <div class="logo">UP<span>web proxy</span></div>
   <nav>
-    <a href="#features">Features</a>
+    <div class="dot"></div>
     <a href="#activity">Activity</a>
     <a href="https://github.com" target="_blank">GitHub</a>
-    <span class="nav-badge">LIVE</span>
   </nav>
 </header>
 
-<!-- ── Hero ──────────────────────────────────────────────── -->
-<section class="hero">
-  <div class="hero-eyebrow">⚡ Open-source web proxy</div>
-  <h1 class="hero-title">BROWSE<br/><span>FREELY</span></h1>
-  <p class="hero-sub">Enter any URL below. UltraProxy fetches it server-side and streams it back to you — no tracking, no blocks.</p>
+<div class="hero">
+  <h1>Browse<br/><span>anything.</span></h1>
+  <p class="sub">Enter any URL. UP fetches it through the server so you can access it freely.</p>
 
-  <div class="url-form">
-    <div class="url-wrap">
-      <span class="url-scheme">https://</span>
-      <input id="url-input" type="text" placeholder="example.com" autocomplete="off" autocorrect="off" spellcheck="false"/>
-      <button class="url-btn" onclick="goProxy()">GO</button>
-    </div>
-    <p class="error-msg" id="error-msg">Please enter a valid URL.</p>
-    <p class="url-hint">Press <kbd style="background:var(--surface2);border:1px solid var(--border2);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:11px">Enter</kbd> or click GO — works on any public website</p>
+  <div class="bar" id="bar">
+    <input id="inp" type="text" placeholder="youtube.com" autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <button onclick="go()">Go</button>
   </div>
+  <div class="err hide" id="err">Please enter a valid URL</div>
 
-  <div class="quick-links">
-    <a class="quick-link" href="#" onclick="proxyTo('https://wikipedia.org');return false;">Wikipedia</a>
-    <a class="quick-link" href="#" onclick="proxyTo('https://news.ycombinator.com');return false;">Hacker News</a>
-    <a class="quick-link" href="#" onclick="proxyTo('https://httpbin.org');return false;">HTTPBin</a>
-    <a class="quick-link" href="#" onclick="proxyTo('https://example.com');return false;">Example.com</a>
-    <a class="quick-link" href="#" onclick="proxyTo('https://neverssl.com');return false;">NeverSSL</a>
-    <a class="quick-link" href="#" onclick="proxyTo('https://wttr.in');return false;">wttr.in</a>
+  <div class="pills">
+    <div class="pill" onclick="go('wikipedia.org')">Wikipedia</div>
+    <div class="pill" onclick="go('news.ycombinator.com')">Hacker News</div>
+    <div class="pill" onclick="go('example.com')">Example.com</div>
+    <div class="pill" onclick="go('httpbin.org')">HTTPBin</div>
+    <div class="pill" onclick="go('neverssl.com')">NeverSSL</div>
+    <div class="pill" onclick="go('wttr.in')">wttr.in</div>
   </div>
 
-  <div class="stats-ticker">
-    <div class="ticker-item">
-      <div class="ticker-val" id="stat-proxied">—</div>
-      <div class="ticker-label">Requests</div>
-    </div>
-    <div class="ticker-item">
-      <div class="ticker-val" id="stat-uptime">—</div>
-      <div class="ticker-label">Uptime</div>
-    </div>
-    <div class="ticker-item">
-      <div class="ticker-val" id="stat-bytes">—</div>
-      <div class="ticker-label">Data served</div>
-    </div>
-    <div class="ticker-item">
-      <div class="ticker-val" id="stat-errors">—</div>
-      <div class="ticker-label">Errors</div>
-    </div>
-  </div>
-</section>
-
-<!-- ── Features ───────────────────────────────────────────── -->
-<div id="features" class="divider" style="padding-top:60px">
-  <div class="divider-line"></div>
-  <div class="divider-label">What it does</div>
-  <div class="divider-line"></div>
-</div>
-
-<div class="features">
-  <div class="feature">
-    <span class="feat-icon">🌐</span>
-    <div class="feat-title">Full Web Proxy</div>
-    <p class="feat-desc">Fetches any public URL server-side, rewrites all links and assets so you can browse normally through the proxy.</p>
-  </div>
-  <div class="feature">
-    <span class="feat-icon">🔗</span>
-    <div class="feat-title">Link Rewriting</div>
-    <p class="feat-desc">Every href, src, action, srcset, and CSS url() is rewritten so navigation stays inside the proxy automatically.</p>
-  </div>
-  <div class="feature">
-    <span class="feat-icon">🔒</span>
-    <div class="feat-title">Private IPs Blocked</div>
-    <p class="feat-desc">Requests to localhost, 192.168.x.x, 10.x.x.x, and other internal addresses are rejected for safety.</p>
-  </div>
-  <div class="feature">
-    <span class="feat-icon">⚡</span>
-    <div class="feat-title">Fast & Lightweight</div>
-    <p class="feat-desc">Pure Node.js with zero heavyweight dependencies. Streams binary resources directly without unnecessary buffering.</p>
-  </div>
-  <div class="feature">
-    <span class="feat-icon">🚦</span>
-    <div class="feat-title">Rate Limited</div>
-    <p class="feat-desc">120 requests per minute per IP. Keeps the server healthy and prevents abuse.</p>
-  </div>
-  <div class="feature">
-    <span class="feat-icon">📊</span>
-    <div class="feat-title">Live Metrics</div>
-    <p class="feat-desc">See total requests, data served, uptime, and recent activity — all on this page, live-updated every few seconds.</p>
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="sv-req">—</div><div class="stat-lbl">Requests</div></div>
+    <div class="stat"><div class="stat-val" id="sv-up">—</div><div class="stat-lbl">Uptime</div></div>
+    <div class="stat"><div class="stat-val" id="sv-data">—</div><div class="stat-lbl">Data</div></div>
+    <div class="stat"><div class="stat-val" id="sv-err">—</div><div class="stat-lbl">Errors</div></div>
   </div>
 </div>
 
-<!-- ── Activity ───────────────────────────────────────────── -->
-<div id="activity" class="section">
-  <div class="section-header">
-    <h2 class="section-title">RECENT ACTIVITY</h2>
-    <span class="section-count" id="activity-count">—</span>
-  </div>
-  <div style="overflow-x:auto">
-    <table class="activity-table">
-      <thead>
-        <tr>
-          <th>URL</th>
-          <th>Status</th>
-          <th>Size</th>
-          <th>Time</th>
-          <th>When</th>
-        </tr>
-      </thead>
-      <tbody id="activity-body">
-        <tr><td colspan="5" style="color:var(--muted);padding:30px;text-align:center">No activity yet — proxy a URL above</td></tr>
-      </tbody>
-    </table>
-  </div>
+<div id="activity" style="height:1px;background:var(--b1)"></div>
+
+<div class="section">
+  <h2>Recent activity</h2>
+  <div class="log" id="log"><div class="empty">No requests yet</div></div>
 </div>
 
-<!-- ── Footer ────────────────────────────────────────────────── -->
 <footer>
-  <span>⚡ UltraProxy — open source, MIT licensed</span>
-  <span>
-    <a href="https://github.com" target="_blank">GitHub</a> &nbsp;·&nbsp;
-    <a href="/health">Health</a> &nbsp;·&nbsp;
-    <a href="/api/stats">API</a>
-  </span>
+  <span>UP — open source web proxy</span>
+  <span><a href="/api/stats">API</a> &nbsp;·&nbsp; <a href="/health">Health</a></span>
 </footer>
 
 <script>
-// ── Proxy navigation ─────────────────────────────────────────
-function goProxy() {
-  let val = document.getElementById('url-input').value.trim();
-  if (!val) { showError('Please enter a URL.'); return; }
-  if (!/^https?:\/\//i.test(val)) val = 'https://' + val;
-  try { new URL(val); } catch { showError('That doesn\'t look like a valid URL.'); return; }
-  window.location.href = '/proxy?url=' + encodeURIComponent(val);
+function go(preset) {
+  let v = preset || document.getElementById('inp').value.trim();
+  if (!v) { showErr('Please enter a URL'); return; }
+  if (!/^https?:\/\//i.test(v)) v = 'https://' + (v.includes('.') ? v : v + '.com');
+  location.href = '/proxy?url=' + encodeURIComponent(v);
 }
 
-function proxyTo(url) {
-  window.location.href = '/proxy?url=' + encodeURIComponent(url);
+document.getElementById('inp').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+
+function showErr(msg) {
+  const el = document.getElementById('err');
+  el.textContent = msg; el.classList.remove('hide');
+  setTimeout(() => el.classList.add('hide'), 2500);
 }
 
-function showError(msg) {
-  const el = document.getElementById('error-msg');
-  el.textContent = msg;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 3000);
+function fmt(b) {
+  if (!b) return '0B';
+  const u = ['B','KB','MB','GB'], i = Math.min(Math.floor(Math.log(b)/Math.log(1024)), 3);
+  return (b/Math.pow(1024,i)).toFixed(i?1:0) + u[i];
+}
+function fmtUp(s) {
+  if (s < 60) return s + 's';
+  if (s < 3600) return Math.floor(s/60) + 'm';
+  if (s < 86400) return Math.floor(s/3600) + 'h';
+  return Math.floor(s/86400) + 'd';
+}
+function ago(iso) {
+  const d = Math.floor((Date.now() - new Date(iso))/1000);
+  if (d < 5) return 'now';
+  if (d < 60) return d + 's';
+  if (d < 3600) return Math.floor(d/60) + 'm';
+  return Math.floor(d/3600) + 'h';
+}
+function sc(code) {
+  if (code >= 500) return 's5';
+  if (code >= 400) return 's4';
+  if (code >= 300) return 's3';
+  return 's2';
+}
+function domain(u) {
+  try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; }
 }
 
-document.getElementById('url-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') goProxy();
-});
-
-// Focus the input
-document.getElementById('url-input').focus();
-
-// ── Helpers ──────────────────────────────────────────────────
-function fmtBytes(b) {
-  if (!b) return '0 B';
-  const u = ['B','KB','MB','GB'];
-  const i = Math.floor(Math.log(b) / Math.log(1024));
-  return (b / Math.pow(1024, i)).toFixed(1) + ' ' + u[i];
-}
-
-function fmtUptime(s) {
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-  if (h > 0) return h + 'h';
-  if (m > 0) return m + 'm';
-  return s + 's';
-}
-
-function statusClass(code) {
-  if (code >= 500) return 'status-5';
-  if (code >= 400) return 'status-4';
-  if (code >= 300) return 'status-3';
-  return 'status-2';
-}
-
-function timeAgo(iso) {
-  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
-  if (diff < 5)  return 'just now';
-  if (diff < 60) return diff + 's ago';
-  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
-  return Math.floor(diff/3600) + 'h ago';
-}
-
-// ── Stats polling ────────────────────────────────────────────
-async function refreshStats() {
+async function refresh() {
   try {
     const d = await fetch('/api/stats').then(r => r.json());
+    document.getElementById('sv-req').textContent  = d.proxied.toLocaleString();
+    document.getElementById('sv-up').textContent   = fmtUp(d.uptime);
+    document.getElementById('sv-data').textContent = fmt(d.bytes);
+    document.getElementById('sv-err').textContent  = d.errors;
 
-    document.getElementById('stat-proxied').textContent = d.proxied.toLocaleString();
-    document.getElementById('stat-uptime').textContent  = fmtUptime(d.uptime);
-    document.getElementById('stat-bytes').textContent   = fmtBytes(d.bytes);
-    document.getElementById('stat-errors').textContent  = d.errors;
-
-    document.getElementById('activity-count').textContent = d.recent.length + ' recent';
-
-    const body = document.getElementById('activity-body');
-    if (!d.recent.length) {
-      body.innerHTML = '<tr><td colspan="5" style="color:var(--muted);padding:30px;text-align:center">No activity yet — proxy a URL above</td></tr>';
-      return;
-    }
-
-    body.innerHTML = d.recent.map(r => {
-      const domain = (() => { try { return new URL(r.url).hostname; } catch { return r.url; } })();
-      return `<tr>
-        <td>
-          <a class="activity-url" href="/proxy?url=${encodeURIComponent(r.url)}" title="${r.url}">
-            ${r.url}
-          </a>
-        </td>
-        <td class="${statusClass(r.status)}">${r.status}</td>
-        <td style="color:var(--muted2)">${fmtBytes(r.bytes)}</td>
-        <td style="color:var(--muted2)">${r.ms}ms</td>
-        <td style="color:var(--muted)">${timeAgo(r.time)}</td>
-      </tr>`;
-    }).join('');
-  } catch(e) {
-    // Server not responding — silently ignore
-  }
+    const log = document.getElementById('log');
+    if (!d.recent.length) { log.innerHTML = '<div class="empty">No requests yet</div>'; return; }
+    log.innerHTML = d.recent.map(r => `
+      <div class="log-row">
+        <a class="log-url" href="/proxy?url=${encodeURIComponent(r.url)}" title="${r.url}">${r.url}</a>
+        <span class="log-status ${sc(r.status)}">${r.status}</span>
+        <span class="log-size">${fmt(r.bytes)}</span>
+        <span class="log-ms">${r.ms}ms</span>
+        <span class="log-time">${ago(r.time)}</span>
+      </div>`).join('');
+  } catch {}
 }
 
-refreshStats();
-setInterval(refreshStats, 4000);
+refresh();
+setInterval(refresh, 4000);
+document.getElementById('inp').focus();
 </script>
 </body>
 </html>

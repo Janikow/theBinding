@@ -1,39 +1,55 @@
 /* ══ DESIGN TOKENS ══════════════════════════════════════════════════ */
+/* ══ HL2 / SOURCE ENGINE DESIGN TOKENS ══════════════════════════════ */
 :root {
-  --bg:        #0e0f13;
-  --bg2:       #161820;
-  --bg3:       #1e2028;
-  --hover:     #252733;
-  --active:    #2a2d3e;
-  --surface:   #1a1c24;
-  --surf2:     #21242f;
-  --border:    rgba(255,255,255,0.07);
-  --border2:   rgba(255,255,255,0.13);
-  --accent:    #5865f2;
-  --accent-g:  rgba(88,101,242,0.3);
-  --accent-l:  rgba(88,101,242,0.14);
-  --neon:      #00d8ff;
-  --green:     #3ba55c;
-  --yellow:    #faa81a;
-  --red:       #ed4245;
-  --txt:       #e3e5e8;
-  --txt2:      #96989d;
-  --txt3:      #5c5e66;
-  --mono:      'Space Mono', monospace;
-  --sans:      'DM Sans', sans-serif;
-  --r:         8px;
-  --r2:        12px;
-  --r3:        16px;
-  --shadow:    0 4px 24px rgba(0,0,0,0.55);
-  --shadowL:   0 8px 48px rgba(0,0,0,0.75);
-  --t:         0.17s cubic-bezier(0.4,0,0.2,1);
+  --bg:        #13120d;
+  --bg2:       #1a1a14;
+  --bg3:       #222218;
+  --hover:     #2a2820;
+  --active:    #332f24;
+  --surface:   #1e1d16;
+  --surf2:     #25241b;
+  --border:    rgba(90,78,46,0.55);
+  --border2:   rgba(90,78,46,0.9);
+
+  --accent:    #c8780a;           /* HUD orange — the signature HL2 color */
+  --accent-g:  rgba(200,120,10,0.3);
+  --accent-l:  rgba(200,120,10,0.14);
+  --neon:      #4a7aaa;           /* HEV suit blue (replaces cyan) */
+  --green:     #5a8a3a;           /* health bar green */
+  --yellow:    #d8a020;           /* warning amber */
+  --red:       #c84030;           /* danger red */
+
+  --txt:       #c8b87a;           /* aged parchment — classic Source UI text */
+  --txt2:      #8a7a5a;
+  --txt3:      #5a5040;
+
+  --mono:      'Courier New', 'Lucida Console', monospace;
+  --sans:      'Trebuchet MS', 'Arial Narrow', sans-serif;
+
+  --r:         2px;               /* Source UI is boxy — minimal rounding */
+  --r2:        3px;
+  --r3:        4px;
+
+  --shadow:    0 4px 20px rgba(0,0,0,0.7);
+  --shadowL:   0 8px 40px rgba(0,0,0,0.85);
+  --t:         0.14s cubic-bezier(0.4,0,0.2,1);
   --sidebar:   248px;
   --header:    52px;
 }
+
 [data-theme="light"] {
-  --bg:#f2f3f5; --bg2:#e3e5e8; --bg3:#fff; --hover:#d4d7dc; --active:#c8ccd4;
-  --surface:#fff; --surf2:#f9f9fb; --border:rgba(0,0,0,0.08); --border2:rgba(0,0,0,0.15);
-  --txt:#1e2124; --txt2:#4f5660; --txt3:#8e9297;
+  --bg:      #ccc4a8;
+  --bg2:     #bdb59a;
+  --bg3:     #e8e4d8;
+  --hover:   #d4ccb4;
+  --active:  #c4bc9c;
+  --surface: #dedad0;
+  --surf2:   #e8e4d8;
+  --border:  rgba(90,78,46,0.2);
+  --border2: rgba(90,78,46,0.4);
+  --txt:     #2a2218;
+  --txt2:    #5a4e38;
+  --txt3:    #8a7a5a;
 }
 
 *{margin:0;padding:0;box-sizing:border-box}

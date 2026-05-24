@@ -1,58 +1,87 @@
-# ⚡ UltraProxy
+# 💬 Chatting Grounds
 
-A web proxy you can deploy in minutes. Enter any URL on the homepage and browse it through the server.
-
-## Deploy to Render (5 minutes)
-
-### Step 1 — Put it on GitHub
-1. Go to [github.com/new](https://github.com/new) and create a new **public** repository called `ultraproxy`
-2. Extract this zip, open a terminal in the folder, then run:
-   ```bash
-   git init
-   git add .
-   git commit -m "initial commit"
-   git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/ultraproxy.git
-   git push -u origin main
-   ```
-   *(replace `YOUR_USERNAME` with your GitHub username)*
-
-### Step 2 — Deploy on Render
-1. Go to [render.com](https://render.com) and sign up (free)
-2. Click **New +** → **Blueprint**
-3. Connect your GitHub account and select the `ultraproxy` repo
-4. Render reads `render.yaml` automatically — just click **Apply**
-5. Wait ~2 minutes for the build to finish
-6. Your proxy is live at `https://ultraproxy.onrender.com` (or similar)
-
-That's it. 🎉
+Real-time multi-user chat. Built with Node.js + Socket.io. Deploy for free with GitHub + Render.
 
 ---
 
-## What it does
+## 🚀 Deploy in 5 minutes
 
-- **Web proxy** — enter any URL, the server fetches it and rewrites all links so you can browse normally
-- **Live metrics** — homepage shows total requests, uptime, data served, and recent activity
-- **Rate limited** — 120 requests/minute per IP
-- **Safe** — blocks requests to localhost and private IP ranges
+### Step 1 — Push to GitHub
 
-## Running locally
-
+1. Create a new repo on **github.com** (public or private, both work)
+2. Push these files to it:
 ```bash
-npm install
-npm start
-# open http://localhost:3000
+git init
+git add .
+git commit -m "Chatting Grounds"
+git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+git push -u origin main
 ```
 
-## API
+### Step 2 — Deploy on Render
 
-| Endpoint | Description |
+1. Go to **https://render.com** and sign up (free)
+2. Click **New → Web Service**
+3. Connect your GitHub account and select your repo
+4. Fill in the settings:
+
+| Setting | Value |
 |---|---|
-| `GET /proxy?url=https://example.com` | Proxy a URL |
-| `GET /api/stats` | JSON metrics |
-| `GET /health` | Health check (used by Render) |
+| **Name** | chatting-grounds (or anything you like) |
+| **Runtime** | Node |
+| **Build Command** | `npm install` |
+| **Start Command** | `npm start` |
+| **Instance Type** | Free |
 
-## Notes
+5. Click **Create Web Service**
+6. Wait ~1 minute for it to build and deploy
+7. Render gives you a URL like `https://chatting-grounds-xxxx.onrender.com`
 
-- The free Render tier spins down after 15 minutes of inactivity. First request after that takes ~30 seconds to wake up. Upgrade to a paid plan ($7/mo) to keep it always-on.
-- Works on any device with a browser — including your Chromebook — no apps needed.
+**Share that URL with your friends and start chatting! 🎉**
+
+---
+
+## 💡 Notes
+
+- **Free tier spins down** after 15 minutes of inactivity — first load may take ~30 seconds to wake up. Upgrade to Starter ($7/mo) if you want it always-on.
+- **Messages are in memory** — they reset if the server restarts. This is fine for casual use. For persistent history, add a database (MongoDB Atlas free tier works great with this stack).
+- The server keeps the last **200 messages per channel** for new joiners.
+
+---
+
+## 📁 Structure
+
+```
+chatting-grounds/
+├── server.js          — Express + Socket.io server
+├── package.json       — Dependencies
+└── public/
+    ├── index.html     — UI
+    ├── style.css      — Dark/light theme
+    ├── app.js         — Client-side Socket.io logic
+    └── emoji-data.js  — Emoji picker data
+```
+
+---
+
+## ✨ Features
+
+- **Real-time messaging** — everyone sees messages instantly via WebSockets
+- **Live presence** — see who's online, updates as people join/leave
+- **Typing indicators** — see when someone is typing
+- **4 channels** — #general, #random, #media, #dev-talk
+- **GIF picker** — live Giphy search with categories
+- **Image upload** — drag & drop, paste from clipboard, file picker
+- **File attachments** — with preview modal and caption before sending
+- **Reactions** — 8 quick emoji reactions per message
+- **Reply** — reply to any message with quote
+- **Delete** — delete your own messages
+- **Search** — filter messages in current channel
+- **Markdown formatting** — `**bold**`, `*italic*`, `` `code` ``, `> quote`, `||spoiler||`
+- **Dark / light theme** toggle
+- **Mobile responsive**
+- **Message history** — last 200 messages per channel shown to new joiners
+
+---
+
+Made with ❤ · Chatting Grounds v2.0

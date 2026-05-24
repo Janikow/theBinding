@@ -1,268 +1,195 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>UP — Web Proxy</title>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#000;
-  --s1:#0a0a0a;
-  --s2:#111;
-  --s3:#1a1a1a;
-  --b1:#222;
-  --b2:#333;
-  --t1:#fff;
-  --t2:#999;
-  --t3:#555;
-  --accent:#fff;
-  --green:#22c55e;
-  --red:#ef4444;
-  --yellow:#eab308;
-}
-html{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-body{min-height:100vh;display:flex;flex-direction:column}
-a{color:inherit;text-decoration:none}
-button,input{font-family:inherit}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
-
-/* ── Header ── */
-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 24px;height:52px;border-bottom:1px solid var(--b1);
-  position:sticky;top:0;z-index:100;background:rgba(0,0,0,.85);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-}
-.logo{font-size:15px;font-weight:700;letter-spacing:-.3px}
-.logo span{color:var(--t3);font-weight:400;margin-left:4px;font-size:13px}
-nav{display:flex;gap:20px;align-items:center}
-nav a{font-size:13px;color:var(--t3);transition:color .15s}
-nav a:hover{color:var(--t1)}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2.5s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
-
-/* ── Hero ── */
-.hero{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:80px 20px 60px;text-align:center;
-}
-h1{font-size:clamp(40px,8vw,80px);font-weight:700;letter-spacing:-2px;line-height:1;margin-bottom:16px}
-h1 span{color:var(--t3)}
-.sub{font-size:15px;color:var(--t3);max-width:360px;line-height:1.6;margin-bottom:48px}
-
-/* ── Input bar ── */
-.bar{
-  width:100%;max-width:600px;
-  display:flex;align-items:center;
-  background:var(--s2);border:1px solid var(--b2);border-radius:12px;
-  transition:border-color .2s,box-shadow .2s;
-  overflow:hidden;
-}
-.bar:focus-within{border-color:var(--b2);box-shadow:0 0 0 3px rgba(255,255,255,.06)}
-.bar input{
-  flex:1;background:transparent;border:none;outline:none;
-  padding:14px 16px;font-size:15px;color:var(--t1);
-  font-family:'SF Mono','Fira Mono','JetBrains Mono',monospace;
-  letter-spacing:-.2px;
-}
-.bar input::placeholder{color:var(--t3)}
-.bar button{
-  background:var(--t1);color:#000;border:none;
-  padding:10px 20px;margin:6px;border-radius:8px;
-  font-size:13px;font-weight:700;cursor:pointer;
-  transition:background .15s,transform .1s;white-space:nowrap;
-}
-.bar button:hover{background:#e5e5e5}
-.bar button:active{transform:scale(.96)}
-
-/* ── Quick links ── */
-.pills{
-  display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:20px;
-}
-.pill{
-  font-size:12px;color:var(--t3);background:var(--s2);
-  border:1px solid var(--b1);border-radius:20px;padding:5px 13px;
-  cursor:pointer;transition:all .15s;
-}
-.pill:hover{color:var(--t1);border-color:var(--b2);background:var(--s3)}
-
-/* ── Stats row ── */
-.stats{
-  display:flex;gap:40px;margin-top:56px;padding-top:40px;
-  border-top:1px solid var(--b1);
-}
-.stat{text-align:center}
-.stat-val{font-size:28px;font-weight:700;letter-spacing:-1px;font-variant-numeric:tabular-nums}
-.stat-lbl{font-size:11px;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:.8px}
-
-/* ── Divider ── */
-.divider{
-  display:flex;align-items:center;gap:16px;
-  padding:0 24px;margin:0;color:var(--t3);font-size:11px;
-  text-transform:uppercase;letter-spacing:1.5px;
-}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--b1)}
-
-/* ── Activity ── */
-.section{padding:40px 24px;max-width:900px;margin:0 auto;width:100%}
-.section h2{font-size:13px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:20px}
-.log{display:flex;flex-direction:column;gap:1px}
-.log-row{
-  display:grid;grid-template-columns:1fr 48px 72px 58px 80px;gap:12px;
-  align-items:center;padding:10px 14px;border-radius:8px;
-  transition:background .1s;font-size:12px;
-  font-family:'SF Mono','Fira Mono','JetBrains Mono',monospace;
-}
-.log-row:hover{background:var(--s2)}
-.log-url{color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
-.log-url:hover{color:var(--t1)}
-.log-status{text-align:right}
-.s2{color:var(--green)}.s3{color:#60a5fa}.s4{color:var(--yellow)}.s5{color:var(--red)}
-.log-size,.log-ms,.log-time{color:var(--t3);text-align:right}
-.empty{color:var(--t3);font-size:13px;text-align:center;padding:40px 0}
-
-/* ── Footer ── */
-footer{
-  border-top:1px solid var(--b1);padding:20px 24px;
-  display:flex;justify-content:space-between;align-items:center;
-  font-size:12px;color:var(--t3);
-}
-footer a:hover{color:var(--t1)}
-
-/* ── Error msg ── */
-.err{color:var(--red);font-size:12px;margin-top:8px;height:16px;transition:opacity .2s}
-.err.hide{opacity:0}
-
-/* ── Responsive ── */
-@media(max-width:600px){
-  .stats{gap:24px}.stat-val{font-size:22px}
-  .log-row{grid-template-columns:1fr 40px 60px;}.log-size,.log-time{display:none}
-  nav a{display:none}
-  h1{font-size:48px}
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatting Grounds</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-<header>
-  <div class="logo">UP<span>web proxy</span></div>
-  <nav>
-    <div class="dot"></div>
-    <a href="#activity">Activity</a>
-    <a href="https://github.com" target="_blank">GitHub</a>
-  </nav>
-</header>
-
-<div class="hero">
-  <h1>Browse<br/><span>anything.</span></h1>
-  <p class="sub">Enter any URL. UP fetches it through the server so you can access it freely.</p>
-
-  <div class="bar" id="bar">
-    <input id="inp" type="text" placeholder="youtube.com" autocomplete="off" autocorrect="off" spellcheck="false"/>
-    <button onclick="go()">Go</button>
-  </div>
-  <div class="err hide" id="err">Please enter a valid URL</div>
-
-  <div class="pills">
-    <div class="pill" onclick="go('wikipedia.org')">Wikipedia</div>
-    <div class="pill" onclick="go('news.ycombinator.com')">Hacker News</div>
-    <div class="pill" onclick="go('example.com')">Example.com</div>
-    <div class="pill" onclick="go('httpbin.org')">HTTPBin</div>
-    <div class="pill" onclick="go('neverssl.com')">NeverSSL</div>
-    <div class="pill" onclick="go('wttr.in')">wttr.in</div>
-  </div>
-
-  <div class="stats">
-    <div class="stat"><div class="stat-val" id="sv-req">—</div><div class="stat-lbl">Requests</div></div>
-    <div class="stat"><div class="stat-val" id="sv-up">—</div><div class="stat-lbl">Uptime</div></div>
-    <div class="stat"><div class="stat-val" id="sv-data">—</div><div class="stat-lbl">Data</div></div>
-    <div class="stat"><div class="stat-val" id="sv-err">—</div><div class="stat-lbl">Errors</div></div>
+<!-- ══ JOIN SCREEN ══════════════════════════════════════════════════ -->
+<div class="join-screen" id="joinScreen">
+  <div class="join-card">
+    <div class="join-brand">
+      <div class="brand-icon">CG</div>
+      <h1>Chatting Grounds</h1>
+      <p>Real people. Real conversations.</p>
+    </div>
+    <div class="join-form">
+      <label>Your name
+        <input id="joinName" type="text" placeholder="Enter your name…" maxlength="32" autocomplete="off" />
+      </label>
+      <label>Pick a color
+        <div class="color-picker" id="colorPicker">
+          <div class="swatch active" data-color="#5865f2" style="background:#5865f2"></div>
+          <div class="swatch" data-color="#ed4245" style="background:#ed4245"></div>
+          <div class="swatch" data-color="#3ba55c" style="background:#3ba55c"></div>
+          <div class="swatch" data-color="#faa81a" style="background:#faa81a"></div>
+          <div class="swatch" data-color="#eb459e" style="background:#eb459e"></div>
+          <div class="swatch" data-color="#00d8ff" style="background:#00d8ff"></div>
+          <div class="swatch" data-color="#ff7043" style="background:#ff7043"></div>
+          <div class="swatch" data-color="#ab47bc" style="background:#ab47bc"></div>
+        </div>
+      </label>
+      <button class="btn-primary full" id="joinBtn">Enter Chat →</button>
+    </div>
+    <p class="join-note">No sign-up needed. Your name is visible to everyone in the room.</p>
   </div>
 </div>
 
-<div id="activity" style="height:1px;background:var(--b1)"></div>
+<!-- ══ APP ══════════════════════════════════════════════════════════ -->
+<div class="app" id="app" style="display:none">
 
-<div class="section">
-  <h2>Recent activity</h2>
-  <div class="log" id="log"><div class="empty">No requests yet</div></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="brand">
+        <div class="brand-icon">CG</div>
+        <span>Chatting Grounds</span>
+      </div>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme">☀</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sec-label">ONLINE — <span id="onlineCount">0</span></div>
+      <div id="userList" class="user-list"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sec-label">CHANNELS</div>
+      <div class="ch-list">
+        <div class="ch-item active" data-ch="general"><span class="ch-ic">#</span>general</div>
+        <div class="ch-item" data-ch="random"><span class="ch-ic">#</span>random</div>
+        <div class="ch-item" data-ch="media"><span class="ch-ic">📸</span>media</div>
+        <div class="ch-item" data-ch="dev-talk"><span class="ch-ic">💻</span>dev-talk</div>
+      </div>
+    </div>
+
+    <div class="me-panel">
+      <div class="me-av" id="meAv">?</div>
+      <div class="me-info">
+        <div class="me-name" id="meName">—</div>
+        <div class="me-status">● Online</div>
+      </div>
+      <button class="icon-btn sm" id="leaveBtn" title="Leave">✕</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn mob-menu" id="mobMenu">☰</button>
+        <span class="topbar-hash" id="topbarHash">#</span>
+        <div>
+          <h2 id="topbarName">general</h2>
+          <p class="topbar-topic" id="topbarTopic">Welcome! Say hello 👋</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" id="searchBtn" title="Search">🔍</button>
+        <span class="online-pill">● <span id="pillCount">0</span> online</span>
+      </div>
+    </header>
+
+    <div class="search-bar" id="searchBar" style="display:none">
+      <input id="searchInput" type="text" placeholder="Search messages…" />
+      <button class="icon-btn sm" id="closeSearch">✕</button>
+    </div>
+
+    <div class="msgs" id="msgs">
+      <div class="welcome" id="welcome">
+        <div class="welcome-ic">#</div>
+        <h3>Welcome to #<span id="welcomeCh">general</span></h3>
+        <p>Start the conversation!</p>
+      </div>
+      <div id="msgList"></div>
+      <div class="typing-row" id="typingRow" style="display:none">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <span id="typingText"></span>
+      </div>
+    </div>
+
+    <div class="reply-strip" id="replyStrip" style="display:none">
+      <span>↩ Replying to <strong id="replyName"></strong>: <em id="replyQuote"></em></span>
+      <button class="icon-btn sm" id="cancelReply">✕</button>
+    </div>
+
+    <div class="input-wrap">
+      <div class="input-row" id="inputRow">
+        <button class="tool" id="attachBtn" title="File">📎</button>
+        <button class="tool" id="imgBtn" title="Image">🖼</button>
+        <button class="tool" id="gifBtn" title="GIF">GIF</button>
+        <button class="tool" id="emojiBtn" title="Emoji">😊</button>
+        <textarea id="msgInput" placeholder="Message #general…" rows="1"></textarea>
+        <button class="send-btn" id="sendBtn">➤</button>
+      </div>
+      <input type="file" id="fileInput" multiple style="display:none" />
+      <input type="file" id="imgInput" accept="image/*" multiple style="display:none" />
+    </div>
+  </main>
 </div>
 
-<footer>
-  <span>UP — open source web proxy</span>
-  <span><a href="/api/stats">API</a> &nbsp;·&nbsp; <a href="/health">Health</a></span>
-</footer>
+<!-- EMOJI PICKER -->
+<div class="emoji-picker" id="emojiPicker" style="display:none">
+  <input id="emojiSearch" type="text" placeholder="Search emoji…" />
+  <div id="emojiGrid" class="emoji-grid"></div>
+</div>
 
-<script>
-function go(preset) {
-  let v = preset || document.getElementById('inp').value.trim();
-  if (!v) { showErr('Please enter a URL'); return; }
-  if (!/^https?:\/\//i.test(v)) v = 'https://' + (v.includes('.') ? v : v + '.com');
-  location.href = '/proxy?url=' + encodeURIComponent(v);
-}
+<!-- GIF MODAL -->
+<div class="overlay" id="gifOverlay" style="display:none">
+  <div class="modal gif-modal">
+    <div class="modal-hdr"><h3>🎞 GIFs</h3><button class="icon-btn" id="closeGif">✕</button></div>
+    <div class="gif-search"><input id="gifSearch" type="text" placeholder="Search Giphy…" /></div>
+    <div class="gif-cats" id="gifCats">
+      <button class="gc active" data-q="trending">🔥 Trending</button>
+      <button class="gc" data-q="funny">😂 Funny</button>
+      <button class="gc" data-q="reaction">😮 Reaction</button>
+      <button class="gc" data-q="celebrate">🎉 Celebrate</button>
+      <button class="gc" data-q="animals">🐶 Animals</button>
+      <button class="gc" data-q="gaming">🎮 Gaming</button>
+    </div>
+    <div id="gifGrid" class="gif-grid"><div class="gif-load"><div class="spinner"></div></div></div>
+    <div class="gif-foot">Powered by <strong>Giphy</strong> · Click to send</div>
+  </div>
+</div>
 
-document.getElementById('inp').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+<!-- FILE PREVIEW MODAL -->
+<div class="overlay" id="fileOverlay" style="display:none">
+  <div class="modal file-modal">
+    <div class="modal-hdr"><h3>📎 Send Files</h3><button class="icon-btn" id="closeFile">✕</button></div>
+    <div class="modal-body">
+      <div id="filePreviews" class="file-previews"></div>
+      <label class="add-more"><input type="file" id="addMore" multiple style="display:none" />+ Add more files</label>
+      <label>Caption (optional)<input id="fileCaption" type="text" placeholder="Say something…" /></label>
+      <div class="modal-btns">
+        <button class="btn-ghost" id="cancelFile">Cancel</button>
+        <button class="btn-primary" id="sendFile">Send <span id="sendFileCount"></span></button>
+      </div>
+    </div>
+  </div>
+</div>
 
-function showErr(msg) {
-  const el = document.getElementById('err');
-  el.textContent = msg; el.classList.remove('hide');
-  setTimeout(() => el.classList.add('hide'), 2500);
-}
+<!-- CONTEXT MENU -->
+<div class="ctx" id="ctx" style="display:none">
+  <div class="ctx-item" data-a="reply">↩ Reply</div>
+  <div class="ctx-item" data-a="react">😊 React</div>
+  <div class="ctx-item" data-a="copy">📋 Copy</div>
+  <div class="ctx-item danger" data-a="delete">🗑 Delete</div>
+</div>
 
-function fmt(b) {
-  if (!b) return '0B';
-  const u = ['B','KB','MB','GB'], i = Math.min(Math.floor(Math.log(b)/Math.log(1024)), 3);
-  return (b/Math.pow(1024,i)).toFixed(i?1:0) + u[i];
-}
-function fmtUp(s) {
-  if (s < 60) return s + 's';
-  if (s < 3600) return Math.floor(s/60) + 'm';
-  if (s < 86400) return Math.floor(s/3600) + 'h';
-  return Math.floor(s/86400) + 'd';
-}
-function ago(iso) {
-  const d = Math.floor((Date.now() - new Date(iso))/1000);
-  if (d < 5) return 'now';
-  if (d < 60) return d + 's';
-  if (d < 3600) return Math.floor(d/60) + 'm';
-  return Math.floor(d/3600) + 'h';
-}
-function sc(code) {
-  if (code >= 500) return 's5';
-  if (code >= 400) return 's4';
-  if (code >= 300) return 's3';
-  return 's2';
-}
-function domain(u) {
-  try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; }
-}
+<!-- QUICK REACTIONS -->
+<div class="qreact" id="qreact" style="display:none">
+  <span data-e="👍">👍</span><span data-e="❤">❤</span><span data-e="😂">😂</span>
+  <span data-e="😮">😮</span><span data-e="🔥">🔥</span><span data-e="🎉">🎉</span>
+  <span data-e="😢">😢</span><span data-e="✅">✅</span>
+</div>
 
-async function refresh() {
-  try {
-    const d = await fetch('/api/stats').then(r => r.json());
-    document.getElementById('sv-req').textContent  = d.proxied.toLocaleString();
-    document.getElementById('sv-up').textContent   = fmtUp(d.uptime);
-    document.getElementById('sv-data').textContent = fmt(d.bytes);
-    document.getElementById('sv-err').textContent  = d.errors;
+<!-- TOASTS -->
+<div id="toasts" class="toasts"></div>
 
-    const log = document.getElementById('log');
-    if (!d.recent.length) { log.innerHTML = '<div class="empty">No requests yet</div>'; return; }
-    log.innerHTML = d.recent.map(r => `
-      <div class="log-row">
-        <a class="log-url" href="/proxy?url=${encodeURIComponent(r.url)}" title="${r.url}">${r.url}</a>
-        <span class="log-status ${sc(r.status)}">${r.status}</span>
-        <span class="log-size">${fmt(r.bytes)}</span>
-        <span class="log-ms">${r.ms}ms</span>
-        <span class="log-time">${ago(r.time)}</span>
-      </div>`).join('');
-  } catch {}
-}
-
-refresh();
-setInterval(refresh, 4000);
-document.getElementById('inp').focus();
-</script>
+<script src="/emoji-data.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/app.js"></script>
 </body>
 </html>

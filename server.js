@@ -1,4 +1,3 @@
-// ══ Chatting Grounds — server.js ══════════════════════════════════════
 const express = require('express');
 const http    = require('http');
 const path    = require('path');
@@ -7,162 +6,174 @@ const { Server } = require('socket.io');
 const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: '*' } });
+const PORT   = process.env.PORT || 3000;
 
-const PORT = process.env.PORT || 3000;
+// ── Storage ────────────────────────────────────────────────────────────
+const MAX = 200;
 
-// ── In-memory state ───────────────────────────────────────────────────
-// Messages: keep last 200 per channel so new joiners see history
-const MAX_HISTORY = 200;
-const messages = {
-  general:    [],
-  random:     [],
-  media:      [],
-  'dev-talk': [],
+// Channel messages
+const channels = {
+  general: [], random: [], 'dev-talk': [], media: []
 };
 
-// Online users: socketId → { id, name, color, channel }
+// DM messages: key = sorted "id1::id2"
+const dms = {};
+
+// Online users: socketId → { id, name, color }
 const users = {};
 
-// ── Static files ──────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/', (_, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+function dmKey(a, b) { return [a, b].sort().join('::'); }
+function uid() { return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+function safe(s) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').slice(0,4000); }
+function sysMsg(text) { return { id:uid(), author:'System', authorId:'system', color:'#444', text, type:'system', reactions:{}, ts:Date.now() }; }
+function trim(arr) { if (arr.length > MAX) arr.splice(0, arr.length - MAX); }
+function broadcast() { io.emit('users', Object.values(users).map(u=>({id:u.id,name:u.name,color:u.color}))); }
 
-// ── Socket.io ─────────────────────────────────────────────────────────
+// ── Static ─────────────────────────────────────────────────────────────
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ── Sockets ────────────────────────────────────────────────────────────
 io.on('connection', socket => {
 
-  // ── Join ─────────────────────────────────────────────────────────
+  // Join
   socket.on('join', ({ name, color }) => {
     const user = {
-      id:      socket.id,
-      name:    sanitize(name).slice(0, 32) || 'Anonymous',
-      color:   /^#[0-9a-f]{6}$/i.test(color) ? color : '#5865f2',
-      channel: 'general',
+      id:    socket.id,
+      name:  safe(name).slice(0,32) || 'Anon',
+      color: /^#[0-9a-f]{6}$/i.test(color) ? color : '#ffffff',
     };
     users[socket.id] = user;
-
-    // Join default channel room
     socket.join('general');
+    socket.data.channel = 'general';
 
-    // Send message history for all channels
-    socket.emit('history', messages);
+    // Send channel history
+    socket.emit('history', channels);
 
-    // Tell everyone who's online
-    io.emit('users', getUsers());
+    // Send DM threads this user is part of
+    const myDms = {};
+    Object.entries(dms).forEach(([key, msgs]) => {
+      if (key.includes(socket.id)) myDms[key] = msgs;
+    });
+    socket.emit('dmHistory', myDms);
 
-    // Announce join in general
-    const sys = sysMsg(`${user.name} joined the chat 👋`);
-    messages.general.push(sys);
-    trimChannel('general');
-    io.to('general').emit('message', { channel: 'general', msg: sys });
+    broadcast();
 
-    console.log(`[+] ${user.name} connected (${socket.id})`);
+    const sys = sysMsg(`${user.name} joined`);
+    channels.general.push(sys);
+    io.to('general').emit('message', { channel:'general', msg:sys });
+
+    console.log(`[+] ${user.name} (${socket.id})`);
   });
 
-  // ── Send message ─────────────────────────────────────────────────
+  // Channel message
   socket.on('message', ({ channel, text, type, content, fileName, fileSize, altText, duration, replyTo }) => {
     const user = users[socket.id];
-    if (!user) return;
-    if (!messages[channel]) return;
-
+    if (!user || !channels[channel]) return;
     const msg = {
-      id:        uid(),
-      author:    user.name,
-      authorId:  user.id,
-      color:     user.color,
-      text:      sanitize(text || '').slice(0, 4000),
-      type:      type || 'text',
-      content:   content   || null,   // base64 image / gif url
-      fileName:  fileName  ? sanitize(fileName).slice(0, 255) : null,
-      fileSize:  fileSize  || null,
-      altText:   altText   ? sanitize(altText).slice(0, 100) : null,
-      duration:  duration  || null,
-      replyTo:   replyTo   || null,
-      reactions: {},
-      ts:        Date.now(),
+      id: uid(), author: user.name, authorId: user.id, color: user.color,
+      text: safe(text||''), type: type||'text',
+      content: content||null, fileName: fileName ? safe(fileName).slice(0,255):null,
+      fileSize: fileSize||null, altText: altText ? safe(altText).slice(0,100):null,
+      duration: duration||null, replyTo: replyTo||null, reactions:{}, ts:Date.now(),
     };
-
-    messages[channel].push(msg);
-    trimChannel(channel);
-
-    // Broadcast to everyone in the channel
+    channels[channel].push(msg); trim(channels[channel]);
     io.to(channel).emit('message', { channel, msg });
   });
 
-  // ── Switch channel ────────────────────────────────────────────────
+  // DM
+  socket.on('dm', ({ toId, text, type, content, fileName, fileSize, altText, duration, replyTo }) => {
+    const user = users[socket.id];
+    const target = users[toId];
+    if (!user || !target) return;
+
+    const key = dmKey(socket.id, toId);
+    if (!dms[key]) dms[key] = [];
+
+    const msg = {
+      id: uid(), author: user.name, authorId: user.id, color: user.color,
+      text: safe(text||''), type: type||'text',
+      content: content||null, fileName: fileName ? safe(fileName).slice(0,255):null,
+      fileSize: fileSize||null, altText: altText ? safe(altText).slice(0,100):null,
+      duration: duration||null, replyTo: replyTo||null, reactions:{}, ts:Date.now(),
+    };
+    dms[key].push(msg); trim(dms[key]);
+
+    // Send to both parties
+    socket.emit('dm', { key, msg });
+    io.to(toId).emit('dm', { key, msg, from: { id:user.id, name:user.name, color:user.color } });
+  });
+
+  // Switch channel room
   socket.on('switchChannel', ({ channel }) => {
     const user = users[socket.id];
-    if (!user || !messages[channel]) return;
-    socket.leave(user.channel);
-    user.channel = channel;
+    if (!user || !channels[channel]) return;
+    socket.leave(socket.data.channel||'general');
+    socket.data.channel = channel;
     socket.join(channel);
   });
 
-  // ── Typing ────────────────────────────────────────────────────────
-  socket.on('typing', ({ channel, isTyping }) => {
+  // Typing
+  socket.on('typing', ({ target, isTyping, isDm }) => {
     const user = users[socket.id];
     if (!user) return;
-    socket.to(channel).emit('typing', { name: user.name, isTyping });
+    if (isDm) {
+      io.to(target).emit('typing', { name:user.name, target:socket.id, isTyping, isDm:true });
+    } else {
+      socket.to(target).emit('typing', { name:user.name, target, isTyping, isDm:false });
+    }
   });
 
-  // ── Reaction ─────────────────────────────────────────────────────
-  socket.on('react', ({ channel, msgId, emoji }) => {
+  // React
+  socket.on('react', ({ channel, msgId, emoji, isDm, dmKey:key }) => {
     const user = users[socket.id];
-    if (!user || !messages[channel]) return;
-    const msg = messages[channel].find(m => m.id === msgId);
+    if (!user) return;
+    const arr = isDm ? (dms[key]||[]) : (channels[channel]||[]);
+    const msg = arr.find(m=>m.id===msgId);
     if (!msg) return;
     if (!msg.reactions[emoji]) msg.reactions[emoji] = {};
-    if (msg.reactions[emoji][socket.id]) {
-      delete msg.reactions[emoji][socket.id];
-      if (Object.keys(msg.reactions[emoji]).length === 0) delete msg.reactions[emoji];
+    if (msg.reactions[emoji][socket.id]) delete msg.reactions[emoji][socket.id];
+    else msg.reactions[emoji][socket.id] = user.name;
+    if (!Object.keys(msg.reactions[emoji]).length) delete msg.reactions[emoji];
+    const payload = { msgId, reactions:msg.reactions, isDm, dmKey:key, channel };
+    if (isDm) {
+      const [a,b] = key.split('::');
+      io.to(a).emit('updateReactions', payload);
+      io.to(b).emit('updateReactions', payload);
     } else {
-      msg.reactions[emoji][socket.id] = user.name;
+      io.to(channel).emit('updateReactions', payload);
     }
-    io.to(channel).emit('updateReactions', { channel, msgId, reactions: msg.reactions });
   });
 
-  // ── Delete message ────────────────────────────────────────────────
-  socket.on('deleteMsg', ({ channel, msgId }) => {
+  // Delete
+  socket.on('deleteMsg', ({ channel, msgId, isDm, dmKey:key }) => {
     const user = users[socket.id];
-    if (!user || !messages[channel]) return;
-    const idx = messages[channel].findIndex(m => m.id === msgId && m.authorId === socket.id);
-    if (idx === -1) return;
-    messages[channel].splice(idx, 1);
-    io.to(channel).emit('deleteMsg', { channel, msgId });
+    if (!user) return;
+    const arr = isDm ? (dms[key]||[]) : (channels[channel]||[]);
+    const idx = arr.findIndex(m=>m.id===msgId && m.authorId===socket.id);
+    if (idx===-1) return;
+    arr.splice(idx,1);
+    const payload = { msgId, isDm, dmKey:key, channel };
+    if (isDm) {
+      const [a,b] = key.split('::');
+      io.to(a).emit('deleteMsg', payload);
+      io.to(b).emit('deleteMsg', payload);
+    } else {
+      io.to(channel).emit('deleteMsg', payload);
+    }
   });
 
-  // ── Disconnect ────────────────────────────────────────────────────
+  // Disconnect
   socket.on('disconnect', () => {
     const user = users[socket.id];
     if (!user) return;
     delete users[socket.id];
-    io.emit('users', getUsers());
-
-    const sys = sysMsg(`${user.name} left the chat`);
-    const ch = user.channel || 'general';
-    messages[ch].push(sys);
-    trimChannel(ch);
-    io.to(ch).emit('message', { channel: ch, msg: sys });
-
-    console.log(`[-] ${user.name} disconnected (${socket.id})`);
+    broadcast();
+    const ch = socket.data.channel||'general';
+    const sys = sysMsg(`${user.name} left`);
+    channels[ch].push(sys);
+    io.to(ch).emit('message', { channel:ch, msg:sys });
+    console.log(`[-] ${user.name} (${socket.id})`);
   });
 });
 
-// ── Helpers ───────────────────────────────────────────────────────────
-function getUsers() {
-  return Object.values(users).map(u => ({ id: u.id, name: u.name, color: u.color, channel: u.channel }));
-}
-function uid() {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-}
-function sanitize(str) {
-  return String(str || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-function sysMsg(text) {
-  return { id: uid(), author: 'System', authorId: 'system', color: '#5c5e66', text, type: 'system', reactions: {}, ts: Date.now() };
-}
-function trimChannel(ch) {
-  if (messages[ch].length > MAX_HISTORY) messages[ch] = messages[ch].slice(-MAX_HISTORY);
-}
-
-// ── Start ─────────────────────────────────────────────────────────────
-server.listen(PORT, () => console.log(`✅ Chatting Grounds running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`✅  http://localhost:${PORT}`));

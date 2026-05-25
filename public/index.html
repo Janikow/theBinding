@@ -1,191 +1,203 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chatting Grounds</title>
   <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-<!-- ══ JOIN SCREEN ══════════════════════════════════════════════════ -->
-<div class="join-screen" id="joinScreen">
-  <div class="join-card">
-    <div class="join-brand">
-      <div class="brand-icon">CG</div>
-      <h1>Chatting Grounds</h1>
-      <p>Real people. Real conversations.</p>
+<!-- ── JOIN ──────────────────────────────────────────────────────── -->
+<div id="joinScreen" class="join-screen">
+  <div class="join-box">
+    <div class="join-logo">
+      <div class="logo-mark">CG</div>
+      <span>Chatting Grounds</span>
     </div>
-    <div class="join-form">
-      <label>Your name
-        <input id="joinName" type="text" placeholder="Enter your name…" maxlength="32" autocomplete="off" />
-      </label>
-      <label>Pick a color
-        <div class="color-picker" id="colorPicker">
-          <div class="swatch active" data-color="#5865f2" style="background:#5865f2"></div>
-          <div class="swatch" data-color="#ed4245" style="background:#ed4245"></div>
-          <div class="swatch" data-color="#3ba55c" style="background:#3ba55c"></div>
-          <div class="swatch" data-color="#faa81a" style="background:#faa81a"></div>
-          <div class="swatch" data-color="#eb459e" style="background:#eb459e"></div>
-          <div class="swatch" data-color="#00d8ff" style="background:#00d8ff"></div>
-          <div class="swatch" data-color="#ff7043" style="background:#ff7043"></div>
-          <div class="swatch" data-color="#ab47bc" style="background:#ab47bc"></div>
-        </div>
-      </label>
-      <button class="btn-primary full" id="joinBtn">Enter Chat →</button>
+    <input id="joinName" type="text" placeholder="Your name" maxlength="32" autocomplete="off" />
+    <div class="color-row" id="colorRow">
+      <div class="dot active" data-c="#ffffff" style="background:#ffffff"></div>
+      <div class="dot" data-c="#60a5fa" style="background:#60a5fa"></div>
+      <div class="dot" data-c="#34d399" style="background:#34d399"></div>
+      <div class="dot" data-c="#f87171" style="background:#f87171"></div>
+      <div class="dot" data-c="#a78bfa" style="background:#a78bfa"></div>
+      <div class="dot" data-c="#fb923c" style="background:#fb923c"></div>
+      <div class="dot" data-c="#f472b6" style="background:#f472b6"></div>
+      <div class="dot" data-c="#facc15" style="background:#facc15"></div>
     </div>
-    <p class="join-note">No sign-up needed. Your name is visible to everyone in the room.</p>
+    <button id="joinBtn">Join →</button>
+    <p>No sign-up. Your name is visible to others.</p>
   </div>
 </div>
 
-<!-- ══ APP ══════════════════════════════════════════════════════════ -->
-<div class="app" id="app" style="display:none">
+<!-- ── APP ───────────────────────────────────────────────────────── -->
+<div id="app" class="app" style="display:none">
 
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-top">
-      <div class="brand">
-        <div class="brand-icon">CG</div>
-        <span>Chatting Grounds</span>
-      </div>
-      <button class="icon-btn" id="themeBtn" title="Toggle theme">☀</button>
-    </div>
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
 
-    <div class="sidebar-section">
-      <div class="sec-label">ONLINE — <span id="onlineCount">0</span></div>
-      <div id="userList" class="user-list"></div>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sec-label">CHANNELS</div>
-      <div class="ch-list">
-        <div class="ch-item active" data-ch="general"><span class="ch-ic">#</span>general</div>
-        <div class="ch-item" data-ch="random"><span class="ch-ic">#</span>random</div>
-        <div class="ch-item" data-ch="media"><span class="ch-ic">📸</span>media</div>
-        <div class="ch-item" data-ch="dev-talk"><span class="ch-ic">💻</span>dev-talk</div>
+    <div class="sidebar-head">
+      <div class="wordmark">CG</div>
+      <div class="sidebar-actions">
+        <button id="notifBtn" class="s-btn notif-on" title="Notifications on — click to toggle">🔔</button>
       </div>
     </div>
 
-    <div class="me-panel">
-      <div class="me-av" id="meAv">?</div>
-      <div class="me-info">
-        <div class="me-name" id="meName">—</div>
-        <div class="me-status">● Online</div>
+    <!-- Channels -->
+    <div class="nav-section">
+      <div class="nav-label">Channels</div>
+      <div id="chList" class="nav-list">
+        <div class="nav-item active" data-ch="general"># general</div>
+        <div class="nav-item" data-ch="random"># random</div>
+        <div class="nav-item" data-ch="dev-talk"># dev-talk</div>
+        <div class="nav-item" data-ch="media"># media</div>
       </div>
-      <button class="icon-btn sm" id="leaveBtn" title="Leave">✕</button>
+    </div>
+
+    <!-- Direct Messages -->
+    <div class="nav-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+      <div class="nav-label">Direct Messages</div>
+      <div id="dmList" class="nav-list dm-nav" style="overflow-y:auto;flex:1"></div>
+    </div>
+
+    <!-- Me -->
+    <div class="me-strip">
+      <div id="meAv" class="me-av">?</div>
+      <div class="me-text">
+        <div id="meName" class="me-name">—</div>
+        <div class="me-sub">● Online</div>
+      </div>
+      <button id="leaveBtn" class="s-btn" title="Leave">✕</button>
     </div>
   </aside>
 
-  <main class="main">
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="icon-btn mob-menu" id="mobMenu">☰</button>
-        <span class="topbar-hash" id="topbarHash">#</span>
-        <div>
-          <h2 id="topbarName">general</h2>
-          <p class="topbar-topic" id="topbarTopic">Welcome! Say hello 👋</p>
-        </div>
-      </div>
-      <div class="topbar-right">
-        <button class="icon-btn" id="searchBtn" title="Search">🔍</button>
-        <span class="online-pill">● <span id="pillCount">0</span> online</span>
-      </div>
-    </header>
+  <!-- Main -->
+  <div class="main">
 
-    <div class="search-bar" id="searchBar" style="display:none">
-      <input id="searchInput" type="text" placeholder="Search messages…" />
-      <button class="icon-btn sm" id="closeSearch">✕</button>
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-l">
+        <button class="s-btn mob-only" id="mobBtn">☰</button>
+        <span id="topbarTitle" class="topbar-title"># general</span>
+        <span id="topbarSub" class="topbar-sub"></span>
+      </div>
+      <div class="topbar-r">
+        <button class="s-btn" id="searchToggle" title="Search">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><path d="m15 15 3 3"/></svg>
+        </button>
+        <span class="online-count" id="onlineBadge">0 online</span>
+      </div>
     </div>
 
-    <div class="msgs" id="msgs">
-      <div class="welcome" id="welcome">
-        <div class="welcome-ic">#</div>
-        <h3>Welcome to #<span id="welcomeCh">general</span></h3>
-        <p>Start the conversation!</p>
+    <!-- Search bar -->
+    <div id="searchBar" class="search-bar" style="display:none">
+      <input id="searchInput" type="text" placeholder="Search messages…" />
+      <button class="s-btn" id="closeSearch">✕</button>
+    </div>
+
+    <!-- Messages -->
+    <div id="msgs" class="msgs">
+      <div id="welcome" class="ch-welcome">
+        <div class="ch-welcome-title" id="welcomeTitle"># general</div>
+        <div class="ch-welcome-sub">Start of the conversation</div>
       </div>
       <div id="msgList"></div>
-      <div class="typing-row" id="typingRow" style="display:none">
-        <div class="dots"><span></span><span></span><span></span></div>
+      <div id="typingRow" class="typing-row" style="display:none">
+        <span class="typing-dots"><span></span><span></span><span></span></span>
         <span id="typingText"></span>
       </div>
     </div>
 
-    <div class="reply-strip" id="replyStrip" style="display:none">
-      <span>↩ Replying to <strong id="replyName"></strong>: <em id="replyQuote"></em></span>
-      <button class="icon-btn sm" id="cancelReply">✕</button>
+    <!-- Reply strip -->
+    <div id="replyStrip" class="reply-strip" style="display:none">
+      <div class="reply-strip-inner">
+        <span class="reply-icon">↩</span>
+        <span>Replying to <strong id="replyName"></strong> — <span id="replyQuote" class="reply-q"></span></span>
+      </div>
+      <button class="s-btn" id="cancelReply">✕</button>
     </div>
 
-    <div class="input-wrap">
-      <div class="input-row" id="inputRow">
-        <button class="tool" id="attachBtn" title="File">📎</button>
-        <button class="tool" id="imgBtn" title="Image">🖼</button>
-        <button class="tool" id="gifBtn" title="GIF">GIF</button>
-        <button class="tool" id="emojiBtn" title="Emoji">😊</button>
-        <textarea id="msgInput" placeholder="Message #general…" rows="1"></textarea>
-        <button class="send-btn" id="sendBtn">➤</button>
+    <!-- Input -->
+    <div class="input-area">
+      <div class="input-bar" id="inputBar">
+        <button class="i-btn" id="attachBtn">📎</button>
+        <button class="i-btn" id="imgBtn">🖼</button>
+        <button class="i-btn" id="gifBtn">GIF</button>
+        <button class="i-btn" id="emojiBtn">☺</button>
+        <textarea id="msgInput" rows="1" placeholder="Message # general…"></textarea>
+        <button class="send-btn" id="sendBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+        </button>
       </div>
       <input type="file" id="fileInput" multiple style="display:none" />
       <input type="file" id="imgInput" accept="image/*" multiple style="display:none" />
     </div>
-  </main>
-</div>
-
-<!-- EMOJI PICKER -->
-<div class="emoji-picker" id="emojiPicker" style="display:none">
-  <input id="emojiSearch" type="text" placeholder="Search emoji…" />
-  <div id="emojiGrid" class="emoji-grid"></div>
-</div>
-
-<!-- GIF MODAL -->
-<div class="overlay" id="gifOverlay" style="display:none">
-  <div class="modal gif-modal">
-    <div class="modal-hdr"><h3>🎞 GIFs</h3><button class="icon-btn" id="closeGif">✕</button></div>
-    <div class="gif-search"><input id="gifSearch" type="text" placeholder="Search Giphy…" /></div>
-    <div class="gif-cats" id="gifCats">
-      <button class="gc active" data-q="trending">🔥 Trending</button>
-      <button class="gc" data-q="funny">😂 Funny</button>
-      <button class="gc" data-q="reaction">😮 Reaction</button>
-      <button class="gc" data-q="celebrate">🎉 Celebrate</button>
-      <button class="gc" data-q="animals">🐶 Animals</button>
-      <button class="gc" data-q="gaming">🎮 Gaming</button>
-    </div>
-    <div id="gifGrid" class="gif-grid"><div class="gif-load"><div class="spinner"></div></div></div>
-    <div class="gif-foot">Powered by <strong>Giphy</strong> · Click to send</div>
   </div>
 </div>
 
-<!-- FILE PREVIEW MODAL -->
-<div class="overlay" id="fileOverlay" style="display:none">
+<!-- Emoji picker -->
+<div id="emojiPicker" class="emoji-picker" style="display:none">
+  <input id="emojiSearch" type="text" placeholder="Search…" />
+  <div id="emojiGrid" class="emoji-grid"></div>
+</div>
+
+<!-- GIF modal -->
+<div id="gifOverlay" class="overlay" style="display:none">
+  <div class="modal gif-modal">
+    <div class="modal-head"><span>GIF</span><button class="s-btn" id="closeGif">✕</button></div>
+    <input id="gifSearch" type="text" placeholder="Search Giphy…" class="modal-input" />
+    <div class="gif-cats" id="gifCats">
+      <button class="gcat active" data-q="trending">Trending</button>
+      <button class="gcat" data-q="funny">Funny</button>
+      <button class="gcat" data-q="reaction">Reaction</button>
+      <button class="gcat" data-q="celebrate">Celebrate</button>
+      <button class="gcat" data-q="animals">Animals</button>
+    </div>
+    <div id="gifGrid" class="gif-grid"><div class="loading-spin"></div></div>
+  </div>
+</div>
+
+<!-- File preview modal -->
+<div id="fileOverlay" class="overlay" style="display:none">
   <div class="modal file-modal">
-    <div class="modal-hdr"><h3>📎 Send Files</h3><button class="icon-btn" id="closeFile">✕</button></div>
+    <div class="modal-head"><span>Send files</span><button class="s-btn" id="closeFile">✕</button></div>
     <div class="modal-body">
       <div id="filePreviews" class="file-previews"></div>
-      <label class="add-more"><input type="file" id="addMore" multiple style="display:none" />+ Add more files</label>
-      <label>Caption (optional)<input id="fileCaption" type="text" placeholder="Say something…" /></label>
+      <label class="add-more-label"><input type="file" id="addMore" multiple style="display:none" />+ Add more</label>
+      <input id="fileCaption" type="text" placeholder="Add a caption…" class="modal-input" />
       <div class="modal-btns">
         <button class="btn-ghost" id="cancelFile">Cancel</button>
-        <button class="btn-primary" id="sendFile">Send <span id="sendFileCount"></span></button>
+        <button class="btn-white" id="sendFile">Send <span id="sendCount"></span></button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- CONTEXT MENU -->
-<div class="ctx" id="ctx" style="display:none">
-  <div class="ctx-item" data-a="reply">↩ Reply</div>
-  <div class="ctx-item" data-a="react">😊 React</div>
-  <div class="ctx-item" data-a="copy">📋 Copy</div>
-  <div class="ctx-item danger" data-a="delete">🗑 Delete</div>
+<!-- Context menu -->
+<div id="ctx" class="ctx" style="display:none">
+  <button class="ctx-item" data-a="reply">↩  Reply</button>
+  <button class="ctx-item" data-a="react">☺  React</button>
+  <button class="ctx-item" data-a="copy">⎘  Copy text</button>
+  <button class="ctx-item danger" data-a="delete">✕  Delete</button>
 </div>
 
-<!-- QUICK REACTIONS -->
-<div class="qreact" id="qreact" style="display:none">
+<!-- Quick reactions -->
+<div id="qr" class="qr" style="display:none">
   <span data-e="👍">👍</span><span data-e="❤">❤</span><span data-e="😂">😂</span>
   <span data-e="😮">😮</span><span data-e="🔥">🔥</span><span data-e="🎉">🎉</span>
   <span data-e="😢">😢</span><span data-e="✅">✅</span>
 </div>
 
-<!-- TOASTS -->
+<!-- Notification permission banner -->
+<div id="notifBanner" class="notif-banner" style="display:none">
+  <span>Allow notifications to get alerted for new messages</span>
+  <button id="allowNotif" class="btn-white small">Allow</button>
+  <button class="s-btn" id="dismissBanner">✕</button>
+</div>
+
+<!-- Toast area -->
 <div id="toasts" class="toasts"></div>
 
 <script src="/emoji-data.js"></script>

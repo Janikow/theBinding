@@ -9,57 +9,74 @@
 </head>
 <body>
 
-<!-- ── JOIN ──────────────────────────────────────────────────────── -->
-<div id="joinScreen" class="join-screen">
-  <div class="join-box">
-    <div class="join-logo">
+<!-- ── AUTH SCREEN ────────────────────────────────────────────────── -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
       <div class="logo-mark">CG</div>
       <span>Chatting Grounds</span>
     </div>
-    <input id="joinName" type="text" placeholder="Your name" maxlength="32" autocomplete="off" />
-    <div class="color-row" id="colorRow">
-      <div class="dot active" data-c="#ffffff" style="background:#ffffff"></div>
-      <div class="dot" data-c="#60a5fa" style="background:#60a5fa"></div>
-      <div class="dot" data-c="#34d399" style="background:#34d399"></div>
-      <div class="dot" data-c="#f87171" style="background:#f87171"></div>
-      <div class="dot" data-c="#a78bfa" style="background:#a78bfa"></div>
-      <div class="dot" data-c="#fb923c" style="background:#fb923c"></div>
-      <div class="dot" data-c="#f472b6" style="background:#f472b6"></div>
-      <div class="dot" data-c="#facc15" style="background:#facc15"></div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Sign in</button>
+      <button class="auth-tab" data-tab="register">Create account</button>
     </div>
-    <button id="joinBtn">Join →</button>
-    <p>No sign-up. Your name is visible to others.</p>
+
+    <!-- Login -->
+    <div class="auth-form" id="loginForm">
+      <label>Username<input id="loginUser" type="text" placeholder="Your username" autocomplete="username" /></label>
+      <label>Password<input id="loginPass" type="password" placeholder="Your password" autocomplete="current-password" /></label>
+      <div class="auth-error" id="loginErr"></div>
+      <button class="btn-white full" id="loginBtn">Sign in →</button>
+    </div>
+
+    <!-- Register -->
+    <div class="auth-form hidden" id="registerForm">
+      <label>Username<input id="regUser" type="text" placeholder="Pick a username" autocomplete="username" maxlength="32" /></label>
+      <label>Password<input id="regPass" type="password" placeholder="At least 4 characters" autocomplete="new-password" /></label>
+      <label>Confirm password<input id="regPass2" type="password" placeholder="Repeat password" autocomplete="new-password" /></label>
+      <label>Colour
+        <div class="color-row" id="colorRow">
+          <div class="dot active" data-c="#ffffff" style="background:#ffffff"></div>
+          <div class="dot" data-c="#60a5fa" style="background:#60a5fa"></div>
+          <div class="dot" data-c="#34d399" style="background:#34d399"></div>
+          <div class="dot" data-c="#f87171" style="background:#f87171"></div>
+          <div class="dot" data-c="#a78bfa" style="background:#a78bfa"></div>
+          <div class="dot" data-c="#fb923c" style="background:#fb923c"></div>
+          <div class="dot" data-c="#f472b6" style="background:#f472b6"></div>
+          <div class="dot" data-c="#facc15" style="background:#facc15"></div>
+        </div>
+      </label>
+      <div class="auth-error" id="regErr"></div>
+      <button class="btn-white full" id="regBtn">Create account →</button>
+    </div>
   </div>
 </div>
 
-<!-- ── APP ───────────────────────────────────────────────────────── -->
+<!-- ── APP ────────────────────────────────────────────────────────── -->
 <div id="app" class="app" style="display:none">
 
-  <!-- Sidebar -->
   <aside id="sidebar" class="sidebar">
-
     <div class="sidebar-head">
       <div class="wordmark">CG</div>
-      <div class="sidebar-actions">
-        <button id="notifBtn" class="s-btn notif-on" title="Notifications on — click to toggle">🔔</button>
+      <div class="head-actions">
+        <button id="notifBtn" class="s-btn" title="Toggle notifications">🔔</button>
       </div>
     </div>
 
     <!-- Channels -->
     <div class="nav-section">
-      <div class="nav-label">Channels</div>
-      <div id="chList" class="nav-list">
-        <div class="nav-item active" data-ch="general"># general</div>
-        <div class="nav-item" data-ch="random"># random</div>
-        <div class="nav-item" data-ch="dev-talk"># dev-talk</div>
-        <div class="nav-item" data-ch="media"># media</div>
+      <div class="nav-label-row">
+        <span class="nav-label">Channels</span>
+        <button class="s-btn add-btn" id="addGroupBtn" title="Create group">＋</button>
       </div>
+      <div id="chList" class="nav-list"></div>
     </div>
 
-    <!-- Direct Messages -->
-    <div class="nav-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <!-- DMs -->
+    <div class="nav-section dm-section">
       <div class="nav-label">Direct Messages</div>
-      <div id="dmList" class="nav-list dm-nav" style="overflow-y:auto;flex:1"></div>
+      <div id="dmList" class="nav-list"></div>
     </div>
 
     <!-- Me -->
@@ -69,14 +86,11 @@
         <div id="meName" class="me-name">—</div>
         <div class="me-sub">● Online</div>
       </div>
-      <button id="leaveBtn" class="s-btn" title="Leave">✕</button>
+      <button id="logoutBtn" class="s-btn" title="Sign out">⎋</button>
     </div>
   </aside>
 
-  <!-- Main -->
   <div class="main">
-
-    <!-- Topbar -->
     <div class="topbar">
       <div class="topbar-l">
         <button class="s-btn mob-only" id="mobBtn">☰</button>
@@ -84,23 +98,22 @@
         <span id="topbarSub" class="topbar-sub"></span>
       </div>
       <div class="topbar-r">
-        <button class="s-btn" id="searchToggle" title="Search">
-          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><path d="m15 15 3 3"/></svg>
+        <button class="s-btn" id="searchToggle">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="9" r="6"/><path d="m15 15 3 3"/></svg>
         </button>
-        <span class="online-count" id="onlineBadge">0 online</span>
+        <span id="onlineBadge" class="online-count">0 online</span>
+        <button id="deleteChBtn" class="s-btn danger-btn" style="display:none" title="Delete this channel">🗑</button>
       </div>
     </div>
 
-    <!-- Search bar -->
     <div id="searchBar" class="search-bar" style="display:none">
       <input id="searchInput" type="text" placeholder="Search messages…" />
       <button class="s-btn" id="closeSearch">✕</button>
     </div>
 
-    <!-- Messages -->
     <div id="msgs" class="msgs">
-      <div id="welcome" class="ch-welcome">
-        <div class="ch-welcome-title" id="welcomeTitle"># general</div>
+      <div class="ch-welcome">
+        <div id="welcomeTitle" class="ch-welcome-title"># general</div>
         <div class="ch-welcome-sub">Start of the conversation</div>
       </div>
       <div id="msgList"></div>
@@ -110,44 +123,54 @@
       </div>
     </div>
 
-    <!-- Reply strip -->
     <div id="replyStrip" class="reply-strip" style="display:none">
-      <div class="reply-strip-inner">
-        <span class="reply-icon">↩</span>
-        <span>Replying to <strong id="replyName"></strong> — <span id="replyQuote" class="reply-q"></span></span>
+      <div class="reply-inner">
+        <span class="reply-ic">↩</span>
+        <span>Replying to <strong id="replyName"></strong> — <em id="replyQuote" class="reply-q"></em></span>
       </div>
       <button class="s-btn" id="cancelReply">✕</button>
     </div>
 
-    <!-- Input -->
     <div class="input-area">
       <div class="input-bar" id="inputBar">
         <button class="i-btn" id="attachBtn">📎</button>
         <button class="i-btn" id="imgBtn">🖼</button>
         <button class="i-btn" id="gifBtn">GIF</button>
         <button class="i-btn" id="emojiBtn">☺</button>
-        <textarea id="msgInput" rows="1" placeholder="Message # general…"></textarea>
+        <textarea id="msgInput" rows="1" placeholder="Message…"></textarea>
         <button class="send-btn" id="sendBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
         </button>
       </div>
-      <input type="file" id="fileInput" multiple style="display:none" />
-      <input type="file" id="imgInput" accept="image/*" multiple style="display:none" />
+      <input type="file" id="fileInput" multiple style="display:none"/>
+      <input type="file" id="imgInput" accept="image/*" multiple style="display:none"/>
     </div>
   </div>
 </div>
 
-<!-- Emoji picker -->
-<div id="emojiPicker" class="emoji-picker" style="display:none">
-  <input id="emojiSearch" type="text" placeholder="Search…" />
-  <div id="emojiGrid" class="emoji-grid"></div>
+<!-- Create group modal -->
+<div id="groupOverlay" class="overlay" style="display:none">
+  <div class="modal sm-modal">
+    <div class="modal-head"><span>Create group chat</span><button class="s-btn" id="closeGroup">✕</button></div>
+    <div class="modal-body">
+      <label>Channel name
+        <input id="groupName" type="text" placeholder="e.g. study-group" class="modal-input" maxlength="32" />
+        <span class="input-hint">Lowercase letters, numbers, hyphens only</span>
+      </label>
+      <label>Topic (optional)
+        <input id="groupTopic" type="text" placeholder="What's this channel about?" class="modal-input" maxlength="120" />
+      </label>
+      <div class="auth-error" id="groupErr"></div>
+      <button class="btn-white full" id="createGroupBtn">Create channel</button>
+    </div>
+  </div>
 </div>
 
 <!-- GIF modal -->
 <div id="gifOverlay" class="overlay" style="display:none">
   <div class="modal gif-modal">
     <div class="modal-head"><span>GIF</span><button class="s-btn" id="closeGif">✕</button></div>
-    <input id="gifSearch" type="text" placeholder="Search Giphy…" class="modal-input" />
+    <input id="gifSearch" type="text" placeholder="Search Giphy…" class="modal-input" style="margin:10px 14px;width:calc(100% - 28px)" />
     <div class="gif-cats" id="gifCats">
       <button class="gcat active" data-q="trending">Trending</button>
       <button class="gcat" data-q="funny">Funny</button>
@@ -161,11 +184,11 @@
 
 <!-- File preview modal -->
 <div id="fileOverlay" class="overlay" style="display:none">
-  <div class="modal file-modal">
+  <div class="modal sm-modal">
     <div class="modal-head"><span>Send files</span><button class="s-btn" id="closeFile">✕</button></div>
     <div class="modal-body">
       <div id="filePreviews" class="file-previews"></div>
-      <label class="add-more-label"><input type="file" id="addMore" multiple style="display:none" />+ Add more</label>
+      <label class="add-more-label"><input type="file" id="addMore" multiple style="display:none"/>＋ Add more</label>
       <input id="fileCaption" type="text" placeholder="Add a caption…" class="modal-input" />
       <div class="modal-btns">
         <button class="btn-ghost" id="cancelFile">Cancel</button>
@@ -175,11 +198,17 @@
   </div>
 </div>
 
+<!-- Emoji picker -->
+<div id="emojiPicker" class="emoji-picker" style="display:none">
+  <input id="emojiSearch" type="text" placeholder="Search…"/>
+  <div id="emojiGrid" class="emoji-grid"></div>
+</div>
+
 <!-- Context menu -->
 <div id="ctx" class="ctx" style="display:none">
   <button class="ctx-item" data-a="reply">↩  Reply</button>
   <button class="ctx-item" data-a="react">☺  React</button>
-  <button class="ctx-item" data-a="copy">⎘  Copy text</button>
+  <button class="ctx-item" data-a="copy">⎘  Copy</button>
   <button class="ctx-item danger" data-a="delete">✕  Delete</button>
 </div>
 
@@ -190,14 +219,13 @@
   <span data-e="😢">😢</span><span data-e="✅">✅</span>
 </div>
 
-<!-- Notification permission banner -->
+<!-- Notification banner -->
 <div id="notifBanner" class="notif-banner" style="display:none">
-  <span>Allow notifications to get alerted for new messages</span>
+  <span>Enable notifications for new messages?</span>
   <button id="allowNotif" class="btn-white small">Allow</button>
   <button class="s-btn" id="dismissBanner">✕</button>
 </div>
 
-<!-- Toast area -->
 <div id="toasts" class="toasts"></div>
 
 <script src="/emoji-data.js"></script>

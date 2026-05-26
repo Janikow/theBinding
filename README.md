@@ -1,75 +1,67 @@
-# 💬 Chatting Grounds
+# 💬 Chatting Grounds v4
 
-Real-time multi-user chat with private messaging and notifications. Deploy free with GitHub + Render.
+Real-time chat with persistent accounts, group chats, DMs, and notifications.
 
 ---
 
-## 🚀 Deploy (5 minutes)
+## 🚀 Deploy (5 min)
 
 ### 1 — Push to GitHub
-
 ```bash
 git init
 git add .
-git commit -m "Chatting Grounds"
+git commit -m "Chatting Grounds v4"
 git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
 git push -u origin main
 ```
 
 ### 2 — Deploy on Render
+1. **render.com** → New → Web Service
+2. Connect your GitHub repo
+3. Settings:
 
-1. Go to **https://render.com** → sign up free
-2. **New → Web Service**
-3. Connect your GitHub repo
-4. Fill in:
-
-| Setting | Value |
+| Field | Value |
 |---|---|
 | Runtime | Node |
 | Build Command | `npm install` |
 | Start Command | `npm start` |
 | Instance Type | Free |
 
-5. Click **Create Web Service**
-6. Share the URL Render gives you — done ✅
+4. Deploy → share the URL ✅
 
-> **Note:** Free tier sleeps after 15 min of inactivity. First load may take ~30s to wake up.
+> Free tier sleeps after 15 min idle. The server self-pings every 14 min via `RENDER_EXTERNAL_URL` to stay awake automatically.
 
 ---
 
 ## ✨ Features
 
-- **Real-time chat** via WebSockets (Socket.io)
-- **Private DMs** — click any online user in the sidebar to open a direct conversation
-- **Chromebook-style notifications** — pop up bottom-right when you get a message; toggleable on/off with the 🔔 button
-- **Desktop notifications** — also fires OS-level notifications if permission granted
-- **4 channels** — #general, #random, #dev-talk, #media
-- **GIF picker** — live Giphy search
-- **Image & file sending** — drag & drop, paste, file picker with preview modal
-- **Reactions** — quick emoji reactions on any message
-- **Reply** — reply to a specific message with quote
-- **Delete** — remove your own messages
-- **Typing indicators** — see when someone is typing
-- **Message search** — filter messages in current view
-- **Unread badges** — red count on channels and DMs with unread messages
-- **Minimal dark design** — black/dark grey, clean and sleek
-- **Mobile responsive** — sidebar slides in on small screens
+- **Accounts** — register with username + password (bcrypt hashed), persisted to `data/users.json`
+- **Auto login** — session saved in localStorage, no re-login needed on refresh
+- **Group chats** — create channels with a name and topic; creator can delete them
+- **Default channels** — #general and #random (cannot be deleted)
+- **Private DMs** — click any online user to open a direct conversation
+- **Chromebook-style notifications** — slide in bottom-right; toggle 🔔 on/off
+- **Unread badges** — red count on channels and DM names
+- **Typing indicators**, reactions, reply, delete, search
+- **GIFs**, image upload, file attachments, drag & drop, paste
+- **Message history** — persisted to `data/messages.json`, shown to new joiners
+- **Self-ping** — prevents Render free tier from sleeping
+- **Minimal dark design** — black/dark grey, clean
 
 ---
 
-## 📁 Structure
-
+## 📁 Files
 ```
-chatting-grounds/
-├── server.js        — Express + Socket.io (channels + DMs)
+├── server.js          — Express + Socket.io + auth API
 ├── package.json
+├── .gitignore
+├── data/              — auto-created at runtime (gitignored)
+│   ├── users.json
+│   ├── channels.json
+│   └── messages.json
 └── public/
     ├── index.html
     ├── style.css
     ├── app.js
     └── emoji-data.js
 ```
-
----
-
-Made with ❤ · Chatting Grounds v3.0

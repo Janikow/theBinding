@@ -1,10 +1,10 @@
 'use strict';
-const express  = require('express');
-const http     = require('http');
-const https    = require('https');
-const path     = require('path');
-const fs       = require('fs');
-const bcrypt   = require('bcryptjs');
+const express = require('express');
+const http    = require('http');
+const https   = require('https');
+const path    = require('path');
+const fs      = require('fs');
+const bcrypt  = require('bcryptjs');
 const { Server } = require('socket.io');
 
 const app    = express();
@@ -12,290 +12,366 @@ const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: '*' } });
 const PORT   = process.env.PORT || 3000;
 
-// ── Data directory ─────────────────────────────────────────────────────
+// ── Data ───────────────────────────────────────────────────────────────
 const DATA = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA)) fs.mkdirSync(DATA, { recursive: true });
 
-const USERS_FILE    = path.join(DATA, 'users.json');
-const CHANNELS_FILE = path.join(DATA, 'channels.json');
-const MESSAGES_FILE = path.join(DATA, 'messages.json');
+const FILES = {
+  users:    path.join(DATA, 'users.json'),
+  groups:   path.join(DATA, 'groups.json'),
+  messages: path.join(DATA, 'messages.json'),
+};
 
-function readJSON(file, fallback) {
-  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; }
-}
-function writeJSON(file, data) {
-  fs.writeFileSync(file, JSON.stringify(data, null, 2));
-}
+function load(f, def) { try { return JSON.parse(fs.readFileSync(f,'utf8')); } catch { return def; } }
+function save(f, d)   { fs.writeFileSync(f, JSON.stringify(d, null, 2)); }
 
-// ── Persistent stores ──────────────────────────────────────────────────
-let users    = readJSON(USERS_FILE, {});
-let channels = readJSON(CHANNELS_FILE, null);
+let users    = load(FILES.users, {});
+let groups   = load(FILES.groups, null);
+let messages = load(FILES.messages, {});
 
-// Seed default channels if first run
-if (!channels) {
-  channels = {
-    general: { id:'general', name:'general', createdBy:'system', isDefault:true,  topic:'Welcome to Chatting Grounds 👋', createdAt:Date.now() },
-    random:  { id:'random',  name:'random',  createdBy:'system', isDefault:true,  topic:'Off-topic and fun stuff 🎲',     createdAt:Date.now() },
+// Seed default groups
+if (!groups) {
+  groups = {
+    general: {
+      id:'general', name:'general', createdBy:'system', createdByName:'System',
+      isDefault:true, isPrivate:false, topic:'Welcome to Chatting Grounds 👋',
+      inviteCode: genCode(), members:[], createdAt:Date.now(),
+    },
   };
-  writeJSON(CHANNELS_FILE, channels);
+  save(FILES.groups, groups);
 }
 
-// Messages: persisted, capped at 300 per channel/dm key
-let messages = readJSON(MESSAGES_FILE, {});
-function saveMessages() {
-  // Only persist channel messages, not DMs (keep those in-session for privacy)
-  const toSave = {};
-  Object.keys(channels).forEach(ch => { if (messages[ch]) toSave[ch] = messages[ch].slice(-300); });
-  writeJSON(MESSAGES_FILE, toSave);
-}
-
-// In-memory: DM messages and active sessions
-const dmMessages = {};  // dmKey → [msg]
-const tokens     = {};  // token → userId
-const online     = {};  // socketId → { userId, username, color, socketId }
+// ── Runtime state ──────────────────────────────────────────────────────
+const tokens  = {};            // token → userId
+const online  = {};            // socketId → { userId, username, displayName, color, avatarEmoji, statusEmoji, statusText, socketId }
+const dmStore = {};            // dmKey → [msg]
 
 // ── Helpers ────────────────────────────────────────────────────────────
-function uid()         { return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
-function dmKey(a, b)   { return [a, b].sort().join('::'); }
-function safe(s, max=4000) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').slice(0,max); }
-function sysMsg(text)  { return { id:uid(), author:'System', authorId:'system', color:'#444', text, type:'system', reactions:{}, ts:Date.now() }; }
-function getOnlineList() { return Object.values(online).map(u=>({ userId:u.userId, username:u.username, color:u.color, socketId:u.socketId })); }
-function broadcastUsers() { io.emit('users', getOnlineList()); }
-function trimArr(arr)  { if (arr.length > 300) arr.splice(0, arr.length - 300); }
+function uid()        { return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+function genCode()    { return Math.random().toString(36).slice(2,8).toUpperCase(); }
+function dmKey(a,b)   { return [a,b].sort().join('::'); }
+function safe(s,max=4000) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').slice(0,max); }
+function sysMsg(text) { return { id:uid(), author:'System', authorId:'system', color:'#444', text, type:'system', reactions:{}, ts:Date.now() }; }
+function trim(arr)    { if(arr.length>300) arr.splice(0, arr.length-300); }
+function broadcastUsers() { io.emit('users', Object.values(online).map(publicUser)); }
+function publicUser(u) {
+  return { socketId:u.socketId, userId:u.userId, username:u.username, displayName:u.displayName||u.username, color:u.color, avatarEmoji:u.avatarEmoji||'', statusEmoji:u.statusEmoji||'', statusText:u.statusText||'' };
+}
+function userGroups(userId) {
+  return Object.values(groups).filter(g => !g.isPrivate || g.isDefault || g.createdBy===userId || (g.members||[]).includes(userId));
+}
+function saveMessages() {
+  const snap = {};
+  Object.keys(groups).forEach(k => { if(messages[k]) snap[k] = messages[k].slice(-300); });
+  save(FILES.messages, snap);
+}
 
-// ── Middleware ─────────────────────────────────────────────────────────
+// ── REST ───────────────────────────────────────────────────────────────
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname,'public')));
 
-// ── Auth REST API ──────────────────────────────────────────────────────
-app.post('/api/register', async (req, res) => {
-  const { username, password, color } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Username and password required.' });
+app.post('/api/register', async (req,res) => {
+  const { username, password, color, displayName, statusEmoji, avatarEmoji } = req.body;
+  if (!username||!password) return res.status(400).json({ error:'Username and password required.' });
   const clean = username.trim().slice(0,32);
-  if (clean.length < 2) return res.status(400).json({ error: 'Username must be at least 2 characters.' });
-  if (password.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters.' });
-
-  const taken = Object.values(users).find(u => u.username.toLowerCase() === clean.toLowerCase());
-  if (taken) return res.status(409).json({ error: 'Username already taken.' });
+  if (clean.length<2) return res.status(400).json({ error:'Username must be at least 2 characters.' });
+  if (password.length<4) return res.status(400).json({ error:'Password must be at least 4 characters.' });
+  if (Object.values(users).find(u=>u.username.toLowerCase()===clean.toLowerCase()))
+    return res.status(409).json({ error:'Username already taken.' });
 
   const hash = await bcrypt.hash(password, 10);
   const userId = uid();
-  users[userId] = { id:userId, username:clean, passwordHash:hash, color:color||'#ffffff', createdAt:Date.now() };
-  writeJSON(USERS_FILE, users);
-
-  const token = uid() + uid();
+  users[userId] = {
+    id:userId, username:clean, passwordHash:hash,
+    color:color||'#ffffff',
+    displayName: (displayName||'').trim().slice(0,32) || clean,
+    bio:'', statusEmoji: statusEmoji||'', statusText:'',
+    avatarEmoji: avatarEmoji||'', bannerColor:'#111111',
+    createdAt:Date.now(),
+  };
+  save(FILES.users, users);
+  const token = uid()+uid();
   tokens[token] = userId;
-  res.json({ token, userId, username:clean, color:color||'#ffffff' });
+  res.json(sessionPayload(token, users[userId]));
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', async (req,res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Username and password required.' });
-  const user = Object.values(users).find(u => u.username.toLowerCase() === username.trim().toLowerCase());
-  if (!user) return res.status(401).json({ error: 'No account with that username.' });
-
-  const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok) return res.status(401).json({ error: 'Incorrect password.' });
-
-  const token = uid() + uid();
+  if (!username||!password) return res.status(400).json({ error:'Username and password required.' });
+  const user = Object.values(users).find(u=>u.username.toLowerCase()===username.trim().toLowerCase());
+  if (!user) return res.status(401).json({ error:'No account with that username.' });
+  if (!await bcrypt.compare(password, user.passwordHash)) return res.status(401).json({ error:'Incorrect password.' });
+  const token = uid()+uid();
   tokens[token] = user.id;
-  res.json({ token, userId:user.id, username:user.username, color:user.color });
+  res.json(sessionPayload(token, user));
 });
 
-app.get('/api/channels', (req, res) => {
-  res.json(Object.values(channels));
-});
+function sessionPayload(token, user) {
+  return {
+    token, userId:user.id, username:user.username,
+    displayName:user.displayName||user.username,
+    color:user.color, avatarEmoji:user.avatarEmoji||'',
+    statusEmoji:user.statusEmoji||'', statusText:user.statusText||'',
+    bio:user.bio||'', bannerColor:user.bannerColor||'#111111',
+  };
+}
 
-app.get('/ping', (_, res) => res.send('pong'));
-app.get('/', (_, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/ping', (_,res) => res.send('pong'));
+app.get('/', (_,res) => res.sendFile(path.join(__dirname,'public','index.html')));
 
-// ── Socket auth middleware ─────────────────────────────────────────────
-io.use((socket, next) => {
-  const token = socket.handshake.auth?.token;
-  const userId = tokens[token];
+// ── Socket auth ────────────────────────────────────────────────────────
+io.use((socket,next) => {
+  const userId = tokens[socket.handshake.auth?.token];
   if (!userId || !users[userId]) return next(new Error('Unauthorized'));
-  socket.data.userId   = userId;
-  socket.data.username = users[userId].username;
-  socket.data.color    = users[userId].color;
+  socket.data.userId = userId;
   next();
 });
 
-// ── Socket events ──────────────────────────────────────────────────────
+// ── Socket ─────────────────────────────────────────────────────────────
 io.on('connection', socket => {
-  const { userId, username, color } = socket.data;
-  online[socket.id] = { userId, username, color, socketId:socket.id };
+  const user = users[socket.data.userId];
+  online[socket.id] = {
+    socketId:socket.id, userId:user.id, username:user.username,
+    displayName:user.displayName||user.username,
+    color:user.color, avatarEmoji:user.avatarEmoji||'',
+    statusEmoji:user.statusEmoji||'', statusText:user.statusText||'',
+  };
 
-  // Join default channel
-  socket.data.channel = 'general';
+  socket.data.group = 'general';
   socket.join('general');
 
-  // Send data
+  // Send initial data
   socket.emit('init', {
-    channels: Object.values(channels),
-    messages,               // all channel message history
-    users: getOnlineList(),
+    groups:    userGroups(user.id),
+    messages,
+    users:     Object.values(online).map(publicUser),
+    myProfile: sessionPayload('', user),
   });
 
   broadcastUsers();
 
-  // Announce
-  const sys = sysMsg(`${username} joined`);
+  const sys = sysMsg(`${user.displayName||user.username} joined`);
   if (!messages.general) messages.general = [];
-  messages.general.push(sys);
-  trimArr(messages.general);
-  saveMessages();
-  io.to('general').emit('message', { channel:'general', msg:sys });
+  messages.general.push(sys); trim(messages.general); saveMessages();
+  io.to('general').emit('message', { group:'general', msg:sys });
 
-  console.log(`[+] ${username} (${socket.id})`);
+  console.log(`[+] ${user.username} (${socket.id})`);
 
-  // ── Channel message ──────────────────────────────────────────────
-  socket.on('message', ({ channel, text, type, content, fileName, fileSize, altText, duration, replyTo }) => {
-    if (!channels[channel]) return;
+  // ── Group message ──────────────────────────────────────────────────
+  socket.on('message', ({ group, text, type, content, fileName, fileSize, altText, duration, replyTo }) => {
+    if (!groups[group]) return;
+    const g = groups[group];
+    if (g.isPrivate && !g.isDefault && g.createdBy!==user.id && !(g.members||[]).includes(user.id)) return;
     const msg = {
-      id:uid(), author:username, authorId:userId, color,
-      text:safe(text||''), type:type||'text',
-      content:content||null,
+      id:uid(), author:user.displayName||user.username, authorId:user.id,
+      authorUsername:user.username, color:user.color, avatarEmoji:user.avatarEmoji||'',
+      text:safe(text||''), type:type||'text', content:content||null,
       fileName:fileName?safe(fileName,255):null, fileSize:fileSize||null,
       altText:altText?safe(altText,100):null, duration:duration||null,
       replyTo:replyTo||null, reactions:{}, ts:Date.now(),
     };
-    if (!messages[channel]) messages[channel] = [];
-    messages[channel].push(msg);
-    trimArr(messages[channel]);
-    saveMessages();
-    io.to(channel).emit('message', { channel, msg });
+    if (!messages[group]) messages[group]=[];
+    messages[group].push(msg); trim(messages[group]); saveMessages();
+    io.to(group).emit('message', { group, msg });
   });
 
-  // ── Switch channel ───────────────────────────────────────────────
-  socket.on('switchChannel', ({ channel }) => {
-    if (!channels[channel]) return;
-    socket.leave(socket.data.channel);
-    socket.data.channel = channel;
-    socket.join(channel);
+  // ── Switch group ──────────────────────────────────────────────────
+  socket.on('switchGroup', ({ group }) => {
+    if (!groups[group]) return;
+    socket.leave(socket.data.group);
+    socket.data.group = group;
+    socket.join(group);
   });
 
-  // ── Create group ─────────────────────────────────────────────────
-  socket.on('createGroup', ({ name, topic }, cb) => {
+  // ── Create group ──────────────────────────────────────────────────
+  socket.on('createGroup', ({ name, topic, isPrivate }, cb) => {
     const clean = safe(name,32).trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    if (!clean || clean.length < 2) return cb?.({ error:'Name must be at least 2 characters (letters/numbers/hyphens).' });
-    if (channels[clean]) return cb?.({ error:'A channel with that name already exists.' });
-    const ch = { id:clean, name:clean, createdBy:userId, createdByName:username, isDefault:false, topic:safe(topic||'',120), createdAt:Date.now() };
-    channels[clean] = ch;
-    writeJSON(CHANNELS_FILE, channels);
-    io.emit('channelCreated', ch);
-    cb?.({ ok:true, channel:ch });
+    if (!clean||clean.length<2) return cb?.({ error:'Name must be at least 2 characters.' });
+    if (groups[clean]) return cb?.({ error:'A group with that name already exists.' });
+    const g = {
+      id:clean, name:clean, createdBy:user.id, createdByName:user.displayName||user.username,
+      isDefault:false, isPrivate:!!isPrivate, topic:safe(topic||'',120),
+      inviteCode:genCode(), members:[user.id], createdAt:Date.now(),
+    };
+    groups[clean] = g;
+    save(FILES.groups, groups);
+    // Only broadcast to creator if private, everyone if public
+    if (g.isPrivate) socket.emit('groupCreated', g);
+    else io.emit('groupCreated', g);
+    cb?.({ ok:true, group:g });
   });
 
-  // ── Delete group ─────────────────────────────────────────────────
-  socket.on('deleteGroup', ({ channelId }, cb) => {
-    const ch = channels[channelId];
-    if (!ch) return cb?.({ error:'Channel not found.' });
-    if (ch.isDefault) return cb?.({ error:'Default channels cannot be deleted.' });
-    if (ch.createdBy !== userId) return cb?.({ error:'Only the creator can delete this channel.' });
-    delete channels[channelId];
-    delete messages[channelId];
-    writeJSON(CHANNELS_FILE, channels);
-    saveMessages();
-    io.emit('channelDeleted', { channelId });
+  // ── Delete group ──────────────────────────────────────────────────
+  socket.on('deleteGroup', ({ groupId }, cb) => {
+    const g = groups[groupId];
+    if (!g) return cb?.({ error:'Group not found.' });
+    if (g.isDefault) return cb?.({ error:'Default groups cannot be deleted.' });
+    if (g.createdBy!==user.id) return cb?.({ error:'Only the creator can delete this group.' });
+    delete groups[groupId]; delete messages[groupId];
+    save(FILES.groups, groups); saveMessages();
+    io.emit('groupDeleted', { groupId });
     cb?.({ ok:true });
   });
 
-  // ── DM ───────────────────────────────────────────────────────────
-  socket.on('dm', ({ toSocketId, text, type, content, fileName, fileSize, altText, duration, replyTo }) => {
+  // ── Get invite code ───────────────────────────────────────────────
+  socket.on('getInviteCode', ({ groupId }, cb) => {
+    const g = groups[groupId];
+    if (!g) return cb?.({ error:'Group not found.' });
+    if (g.createdBy!==user.id && !(g.members||[]).includes(user.id))
+      return cb?.({ error:'Not a member.' });
+    cb?.({ ok:true, code:g.inviteCode, groupId, groupName:g.name });
+  });
+
+  // ── Regenerate invite code ────────────────────────────────────────
+  socket.on('regenInviteCode', ({ groupId }, cb) => {
+    const g = groups[groupId];
+    if (!g||g.createdBy!==user.id) return cb?.({ error:'Not authorized.' });
+    g.inviteCode = genCode();
+    save(FILES.groups, groups);
+    cb?.({ ok:true, code:g.inviteCode });
+  });
+
+  // ── Join via invite code ──────────────────────────────────────────
+  socket.on('joinViaCode', ({ code }, cb) => {
+    const g = Object.values(groups).find(g=>g.inviteCode===code.trim().toUpperCase());
+    if (!g) return cb?.({ error:'Invalid invite code.' });
+    if (!(g.members||[]).includes(user.id)) {
+      if (!g.members) g.members = [];
+      g.members.push(user.id);
+      save(FILES.groups, groups);
+    }
+    socket.emit('groupCreated', g);       // add to their sidebar
+    socket.join(g.id);
+    cb?.({ ok:true, group:g });
+    // Announce in group
+    const sys2 = sysMsg(`${user.displayName||user.username} joined via invite`);
+    if (!messages[g.id]) messages[g.id]=[];
+    messages[g.id].push(sys2); trim(messages[g.id]); saveMessages();
+    io.to(g.id).emit('message', { group:g.id, msg:sys2 });
+  });
+
+  // ── Direct invite (invite an online user to a group) ──────────────
+  socket.on('inviteUser', ({ toSocketId, groupId }, cb) => {
+    const g = groups[groupId];
+    if (!g) return cb?.({ error:'Group not found.' });
     const target = online[toSocketId];
-    if (!target) return;
+    if (!target) return cb?.({ error:'User is not online.' });
+    io.to(toSocketId).emit('groupInvite', {
+      groupId, groupName:g.name, inviteCode:g.inviteCode,
+      fromName:user.displayName||user.username, fromColor:user.color,
+    });
+    cb?.({ ok:true });
+  });
+
+  // ── Update profile ────────────────────────────────────────────────
+  socket.on('updateProfile', ({ displayName, bio, statusEmoji, statusText, color, avatarEmoji, bannerColor }, cb) => {
+    const u = users[user.id];
+    if (!u) return cb?.({ error:'User not found.' });
+    if (displayName!==undefined) u.displayName = safe(displayName,32).trim() || u.username;
+    if (bio!==undefined)         u.bio         = safe(bio,160);
+    if (statusEmoji!==undefined) u.statusEmoji = safe(statusEmoji,8);
+    if (statusText!==undefined)  u.statusText  = safe(statusText,80);
+    if (color!==undefined && /^#[0-9a-f]{6}$/i.test(color)) u.color = color;
+    if (avatarEmoji!==undefined) u.avatarEmoji = safe(avatarEmoji,8);
+    if (bannerColor!==undefined && /^#[0-9a-f]{6}$/i.test(bannerColor)) u.bannerColor = bannerColor;
+    save(FILES.users, users);
+
+    // Update runtime
+    Object.assign(online[socket.id], {
+      displayName:u.displayName, color:u.color,
+      avatarEmoji:u.avatarEmoji, statusEmoji:u.statusEmoji, statusText:u.statusText,
+    });
+
+    broadcastUsers();
+    io.emit('profileUpdated', { userId:user.id, ...publicUser(online[socket.id]), bio:u.bio, bannerColor:u.bannerColor });
+    cb?.({ ok:true, profile:sessionPayload('',u) });
+  });
+
+  // ── Get profile (for profile card) ───────────────────────────────
+  socket.on('getProfile', ({ userId }, cb) => {
+    const u = users[userId];
+    if (!u) return cb?.({ error:'User not found.' });
+    cb?.({
+      userId:u.id, username:u.username, displayName:u.displayName||u.username,
+      color:u.color, avatarEmoji:u.avatarEmoji||'', bio:u.bio||'',
+      statusEmoji:u.statusEmoji||'', statusText:u.statusText||'',
+      bannerColor:u.bannerColor||'#111111', createdAt:u.createdAt,
+    });
+  });
+
+  // ── DM ────────────────────────────────────────────────────────────
+  socket.on('dm', ({ toSocketId, text, type, content, fileName, fileSize, altText, duration, replyTo }) => {
+    const target = online[toSocketId]; if (!target) return;
     const key = dmKey(socket.id, toSocketId);
-    if (!dmMessages[key]) dmMessages[key] = [];
+    if (!dmStore[key]) dmStore[key]=[];
     const msg = {
-      id:uid(), author:username, authorId:userId, color,
-      text:safe(text||''), type:type||'text',
-      content:content||null,
+      id:uid(), author:user.displayName||user.username, authorId:user.id,
+      authorUsername:user.username, color:user.color, avatarEmoji:user.avatarEmoji||'',
+      text:safe(text||''), type:type||'text', content:content||null,
       fileName:fileName?safe(fileName,255):null, fileSize:fileSize||null,
       altText:altText?safe(altText,100):null, duration:duration||null,
       replyTo:replyTo||null, reactions:{}, ts:Date.now(),
     };
-    dmMessages[key].push(msg);
-    trimArr(dmMessages[key]);
+    dmStore[key].push(msg); trim(dmStore[key]);
     socket.emit('dm', { key, msg });
-    io.to(toSocketId).emit('dm', { key, msg, from:{ socketId:socket.id, userId, username, color } });
+    io.to(toSocketId).emit('dm', { key, msg, from:publicUser(online[socket.id]) });
   });
 
-  // ── DM history request ───────────────────────────────────────────
-  socket.on('getDmHistory', ({ withSocketId }, cb) => {
-    const key = dmKey(socket.id, withSocketId);
-    cb?.(dmMessages[key]||[]);
-  });
+  socket.on('getDmHistory', ({ withSocketId }, cb) => cb?.(dmStore[dmKey(socket.id,withSocketId)]||[]));
 
-  // ── Typing ───────────────────────────────────────────────────────
+  // ── Typing ────────────────────────────────────────────────────────
   socket.on('typing', ({ target, isTyping, isDm }) => {
-    if (isDm) {
-      io.to(target).emit('typing', { name:username, from:socket.id, isTyping, isDm:true });
-    } else {
-      socket.to(target).emit('typing', { name:username, from:socket.id, isTyping, isDm:false, channel:target });
-    }
+    const name = user.displayName||user.username;
+    if (isDm) io.to(target).emit('typing', { name, from:socket.id, isTyping, isDm:true });
+    else socket.to(target).emit('typing', { name, from:socket.id, isTyping, isDm:false, group:target });
   });
 
   // ── React ─────────────────────────────────────────────────────────
-  socket.on('react', ({ channel, msgId, emoji, isDm, dmKey:key }) => {
-    const arr = isDm ? (dmMessages[key]||[]) : (messages[channel]||[]);
-    const msg = arr.find(m=>m.id===msgId);
-    if (!msg) return;
-    if (!msg.reactions[emoji]) msg.reactions[emoji] = {};
-    if (msg.reactions[emoji][userId]) delete msg.reactions[emoji][userId];
-    else msg.reactions[emoji][userId] = username;
+  socket.on('react', ({ group, msgId, emoji, isDm, dmKey:key }) => {
+    const arr = isDm ? (dmStore[key]||[]) : (messages[group]||[]);
+    const msg = arr.find(m=>m.id===msgId); if (!msg) return;
+    if (!msg.reactions[emoji]) msg.reactions[emoji]={};
+    if (msg.reactions[emoji][user.id]) delete msg.reactions[emoji][user.id];
+    else msg.reactions[emoji][user.id] = user.displayName||user.username;
     if (!Object.keys(msg.reactions[emoji]).length) delete msg.reactions[emoji];
     if (!isDm) saveMessages();
-    const payload = { msgId, reactions:msg.reactions, isDm, dmKey:key, channel };
-    if (isDm) {
-      const [a,b] = key.split('::');
-      io.to(a).emit('updateReactions', payload);
-      io.to(b).emit('updateReactions', payload);
-    } else {
-      io.to(channel).emit('updateReactions', payload);
-    }
+    const payload = { msgId, reactions:msg.reactions, isDm, dmKey:key, group };
+    if (isDm) { const [a,b]=key.split('::'); io.to(a).emit('updateReactions',payload); io.to(b).emit('updateReactions',payload); }
+    else io.to(group).emit('updateReactions', payload);
   });
 
   // ── Delete msg ────────────────────────────────────────────────────
-  socket.on('deleteMsg', ({ channel, msgId, isDm, dmKey:key }) => {
-    const arr = isDm ? (dmMessages[key]||[]) : (messages[channel]||[]);
-    const idx = arr.findIndex(m=>m.id===msgId && m.authorId===userId);
+  socket.on('deleteMsg', ({ group, msgId, isDm, dmKey:key }) => {
+    const arr = isDm ? (dmStore[key]||[]) : (messages[group]||[]);
+    const idx = arr.findIndex(m=>m.id===msgId && m.authorId===user.id);
     if (idx===-1) return;
-    arr.splice(idx,1);
-    if (!isDm) saveMessages();
-    const payload = { msgId, isDm, dmKey:key, channel };
-    if (isDm) {
-      const [a,b] = key.split('::');
-      io.to(a).emit('deleteMsg', payload);
-      io.to(b).emit('deleteMsg', payload);
-    } else {
-      io.to(channel).emit('deleteMsg', payload);
-    }
+    arr.splice(idx,1); if (!isDm) saveMessages();
+    const payload = { msgId, isDm, dmKey:key, group };
+    if (isDm) { const [a,b]=key.split('::'); io.to(a).emit('deleteMsg',payload); io.to(b).emit('deleteMsg',payload); }
+    else io.to(group).emit('deleteMsg', payload);
   });
 
   // ── Disconnect ────────────────────────────────────────────────────
   socket.on('disconnect', () => {
-    const ch = socket.data.channel||'general';
+    const grp = socket.data.group||'general';
     delete online[socket.id];
     broadcastUsers();
-    const sys = sysMsg(`${username} left`);
-    if (!messages[ch]) messages[ch] = [];
-    messages[ch].push(sys);
-    trimArr(messages[ch]);
-    saveMessages();
-    io.to(ch).emit('message', { channel:ch, msg:sys });
-    console.log(`[-] ${username} (${socket.id})`);
+    const sys2 = sysMsg(`${user.displayName||user.username} left`);
+    if (!messages[grp]) messages[grp]=[];
+    messages[grp].push(sys2); trim(messages[grp]); saveMessages();
+    io.to(grp).emit('message', { group:grp, msg:sys2 });
+    console.log(`[-] ${user.username} (${socket.id})`);
   });
 });
 
-// ── Self-ping to prevent Render free tier sleep ────────────────────────
+// ── Self-ping ──────────────────────────────────────────────────────────
 const SELF = process.env.RENDER_EXTERNAL_URL;
 if (SELF) {
   const url = new URL('/ping', SELF);
   setInterval(() => {
-    const mod = url.protocol === 'https:' ? https : http;
-    mod.get(url.href, r => r.resume()).on('error', () => {});
-  }, 14 * 60 * 1000); // every 14 minutes
-  console.log(`🔄  Self-ping active → ${url.href}`);
+    (url.protocol==='https:' ? https : http).get(url.href, r=>r.resume()).on('error',()=>{});
+  }, 14*60*1000);
+  console.log(`🔄  Self-ping → ${url.href}`);
 }
 
 server.listen(PORT, () => console.log(`✅  http://localhost:${PORT}`));

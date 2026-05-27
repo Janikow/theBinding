@@ -137,13 +137,21 @@ button{font-family:var(--sans);cursor:pointer}input,textarea{font-family:var(--s
 /* ── INPUT ─────────────────────────────────────────────────────────── */
 .input-area{padding:0 12px 12px;flex-shrink:0}
 .input-bar{display:flex;align-items:flex-end;gap:3px;background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r2);padding:5px 7px;transition:border-color var(--t)}
-.input-bar:focus-within{border-color:rgba(255,255,255,.18)}
-.i-btn{background:none;border:none;color:var(--tx3);font-size:16px;padding:3px 5px;border-radius:4px;flex-shrink:0;line-height:1;transition:color var(--t),background var(--t)}
+.input-bar:focus-within{border-color:rgba(255,255,255,.22)}
+.i-btn{background:none;border:none;color:var(--tx3);font-size:16px;padding:4px 5px;border-radius:4px;flex-shrink:0;line-height:1;transition:color var(--t),background var(--t)}
 .i-btn:hover{color:var(--tx);background:var(--hover)}
-#msgInput{flex:1;background:none;border:none;outline:none;color:var(--tx);font-size:14px;resize:none;max-height:130px;min-height:20px;line-height:1.5;padding:3px 0}
+.input-inner{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+#msgInput{width:100%;background:none;border:none;outline:none;color:var(--tx);font-size:14px;resize:none;max-height:130px;min-height:20px;line-height:1.5;padding:3px 0}
 #msgInput::placeholder{color:var(--tx3)}
+.char-counter{
+  align-self:flex-end;font-size:10px;font-family:'SFMono-Regular','Consolas',monospace;
+  color:var(--tx3);padding:0 2px;transition:color var(--t);user-select:none;
+}
+.char-counter.warn{color:var(--yellow,#faa81a)}
+.char-counter.danger{color:var(--red);font-weight:700}
 .send-btn{width:30px;height:30px;border-radius:var(--r);background:var(--white);border:none;color:var(--bg);display:grid;place-items:center;flex-shrink:0;transition:opacity var(--t),transform var(--t)}
 .send-btn:hover{opacity:.85}.send-btn:active{transform:scale(.92)}
+.send-btn:disabled{opacity:.3;cursor:not-allowed}
 
 /* ── PROFILE MODAL ─────────────────────────────────────────────────── */
 .profile-modal{width:440px}
@@ -191,7 +199,59 @@ button{font-family:var(--sans);cursor:pointer}input,textarea{font-family:var(--s
 .toggle input:checked+.slider{background:var(--white);border-color:var(--white)}
 .toggle input:checked+.slider::before{transform:translateX(16px);background:var(--bg)}
 
-/* ── SHARED CONTROLS ──────────────────────────────────────────────── */
+/* ── EXPIRY NOTICE ─────────────────────────────────────────────────── */
+.expiry-notice{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 16px;font-size:11px;color:var(--tx3);
+  border-bottom:1px solid var(--line);background:var(--bg1);flex-shrink:0;
+  letter-spacing:.2px;
+}
+.expiry-dot{width:5px;height:5px;border-radius:50%;background:var(--tx3);flex-shrink:0;animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ── MSG TIMESTAMP on hover ────────────────────────────────────────── */
+.msg.compact .msg-compact-ts{
+  position:absolute;left:18px;top:50%;transform:translateY(-50%);
+  font-size:10px;color:var(--tx3);font-family:'SFMono-Regular','Consolas',monospace;
+  opacity:0;transition:opacity var(--t);pointer-events:none;white-space:nowrap;
+}
+.msg.compact:hover .msg-compact-ts{opacity:1}
+
+/* ── SEND HINT ─────────────────────────────────────────────────────── */
+.input-hint-row{
+  display:flex;justify-content:flex-end;padding:3px 4px 0;
+  font-size:10px;color:var(--tx3);gap:12px;
+}
+.input-hint-row kbd{
+  background:var(--bg3);border:1px solid var(--line2);border-radius:3px;
+  padding:0 4px;font-size:10px;font-family:'SFMono-Regular','Consolas',monospace;
+}
+
+/* ── TOPBAR pill badges ────────────────────────────────────────────── */
+.topbar-badge{
+  font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;
+  background:var(--bg3);border:1px solid var(--line2);color:var(--tx3);
+  white-space:nowrap;
+}
+.invite-btn-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;font-weight:500;padding:4px 10px;
+  background:var(--bg3);border:1px solid var(--line2);
+  border-radius:20px;color:var(--tx2);cursor:pointer;
+  transition:background var(--t),color var(--t),border-color var(--t);
+}
+.invite-btn-pill:hover{background:var(--white);color:var(--bg);border-color:var(--white)}
+
+/* ── SIDEBAR group item tweaks ─────────────────────────────────────── */
+.nav-item .nav-item-meta{font-size:10px;color:var(--tx3);margin-left:auto;flex-shrink:0}
+.nav-item:hover .nav-item-meta{color:var(--tx2)}
+
+/* ── WELCOME improved ──────────────────────────────────────────────── */
+.ch-welcome{padding:32px 20px 16px;flex-shrink:0}
+.ch-welcome-icon{font-size:32px;margin-bottom:10px}
+.ch-welcome-title{font-size:22px;font-weight:700;margin-bottom:4px;letter-spacing:-.3px}
+.ch-welcome-sub{font-size:13px;color:var(--tx3);line-height:1.5}
+.ch-welcome-divider{width:32px;height:2px;background:var(--line2);border-radius:1px;margin:14px 0}
 .s-btn{background:none;border:none;color:var(--tx3);padding:5px 6px;border-radius:4px;font-size:14px;line-height:1;transition:background var(--t),color var(--t)}
 .s-btn:hover{background:var(--hover);color:var(--tx)}.s-btn.mob-only{display:none}
 .btn-white{background:var(--white);color:var(--bg);border:none;border-radius:var(--r);padding:9px 16px;font-size:13px;font-weight:600;transition:opacity var(--t)}

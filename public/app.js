@@ -289,7 +289,8 @@ function switchGroup(id) {
   const g=allGroups[id]||{};
   $('topTitle').textContent=`# ${id}`;
   $('topSub').textContent=g.topic||'';
-  $('welcomeTitle').textContent=`# ${id}`;
+  $('welcomeTitle').textContent=id;
+  $('welcomeIcon').textContent=g.isPrivate?'🔒':'#';
   $('msgInput').placeholder=`Message # ${id}…`;
   renderGroupList();
   document.querySelectorAll('.nav-item[onclick*="switchDm"]').forEach(el=>el.classList.remove('active'));
@@ -314,6 +315,7 @@ function renderDmView(socketId,displayName,color,key){
   $('topTitle').textContent=displayName;
   $('topSub').textContent='Direct message';
   $('welcomeTitle').textContent=displayName;
+  $('welcomeIcon').textContent='💬';
   $('msgInput').placeholder=`Message ${displayName}…`;
   $('inviteBtn').style.display='none';
   $('deleteGrpBtn').style.display='none';
@@ -365,6 +367,7 @@ function buildEl(key,msg,compact){
   el.innerHTML=`
     <div class="av-col"><div class="av" style="background:${msg.color||'#555'};color:${contrast(msg.color||'#555')}" onclick="showProfileCard(event,'${msg.authorId}')">${avLabel}</div></div>
     <div class="msg-body">${hdr}${replyHtml}${body}${rxns}</div>
+    ${compact?`<span class="msg-compact-ts">${fmtTime(msg.ts)}</span>`:''}
     <div class="msg-acts">
       <button class="ma" onclick="openQR(event,'${msg.id}',${JSON.stringify({isOwn,isDm,key})})">☺</button>
       <button class="ma" onclick="doReply('${msg.id}')">↩</button>
@@ -387,15 +390,17 @@ function sendMsg(extra={}){
   if(!socket) return;
   const text=$('msgInput').value.trim();
   if(!text&&!extra.type) return;
+  if(text.length>CAP) return;
   const base={text,replyTo:replyTo?{id:replyTo.id,author:replyTo.author,text:(replyTo.text||'').slice(0,100)}:null,...extra};
   if(view.type==='dm') socket.emit('dm',{toSocketId:view.id,...base});
   else socket.emit('message',{group:view.id,...base});
   $('msgInput').value=''; autoResize(); cancelReply();
+  updateCharCounter();
   emitTyping(false); clearTimeout(window._tt); playSound();
 }
 $('sendBtn').addEventListener('click',sendMsg);
 $('msgInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}if(e.key==='Escape')cancelReply();});
-$('msgInput').addEventListener('input',()=>{ autoResize(); emitTyping(true); clearTimeout(window._tt); window._tt=setTimeout(()=>emitTyping(false),2500); });
+$('msgInput').addEventListener('input',()=>{ autoResize(); updateCharCounter(); emitTyping(true); clearTimeout(window._tt); window._tt=setTimeout(()=>emitTyping(false),2500); });
 function emitTyping(v){if(!socket)return;if(view.type==='dm')socket.emit('typing',{target:view.id,isTyping:v,isDm:true});else socket.emit('typing',{target:view.id,isTyping:v,isDm:false});}
 
 // ── Reply / delete / react ─────────────────────────────────────────────
@@ -619,7 +624,37 @@ function showGroupInviteNotif({groupId,groupName,inviteCode,fromName,fromColor})
   document.body.appendChild(el); setTimeout(dismiss,15000);
 }
 
-// ── Emoji picker ───────────────────────────────────────────────────────
+// ── Char counter ───────────────────────────────────────────────────────
+const CAP = 2000;
+const charCounter = $('charCounter');
+const sendBtn = $('sendBtn');
+
+function updateCharCounter() {
+  const len = $('msgInput').value.length;
+  const left = CAP - len;
+  const show = len > 0;
+  charCounter.style.display = show ? 'block' : 'none';
+  charCounter.textContent = left;
+  charCounter.className = 'char-counter' + (left <= 50 ? ' danger' : left <= 200 ? ' warn' : '');
+  sendBtn.disabled = len > CAP;
+}
+
+// ── Expired messages handler ────────────────────────────────────────────
+socket.on('msgsExpired', ({ ids, isDm, dmKey:k, group }) => {
+  const key = isDm ? k : group;
+  // Remove from store
+  if (msgStore[key]) ids.forEach(id => delete msgStore[key][id]);
+  // Remove from DOM if currently viewing
+  const isVisible = isDm
+    ? (view.type==='dm' && dmKey(socket.id,view.id)===key)
+    : (view.type==='group' && view.id===key);
+  if (isVisible) {
+    ids.forEach(id => {
+      const el = ML().querySelector(`[data-id="${id}"]`);
+      if (el) { el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),420); }
+    });
+  }
+});
 function buildEmojis(f=''){const all=Object.values(EMOJI_DATA.emojis).flat();const items=f?all.filter(e=>e.n.toLowerCase().includes(f.toLowerCase())):all;$('emojiGrid').innerHTML=items.slice(0,270).map(e=>`<span class="em" title="${e.n}">${e.e}</span>`).join('');}
 $('emojiBtn').addEventListener('click',e=>{e.stopPropagation();const p=$('emojiPicker');p.style.display=p.style.display==='none'?'block':'none';if(p.style.display==='block'){buildEmojis();$('emojiSearch').focus();}});
 $('emojiSearch').addEventListener('input',e=>buildEmojis(e.target.value));

@@ -102,7 +102,7 @@
         <span id="topSub"   class="topbar-sub"></span>
       </div>
       <div class="topbar-r">
-        <button id="inviteBtn"   class="s-btn" style="display:none" title="Invite people">🔗 Invite</button>
+        <button id="inviteBtn" class="invite-btn-pill" style="display:none" title="Invite people">🔗 <span>Invite</span></button>
         <button id="deleteGrpBtn" class="s-btn danger-btn" style="display:none" title="Delete group">🗑</button>
         <button id="searchToggle" class="s-btn">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="9" r="6"/><path d="m15 15 3 3"/></svg>
@@ -116,10 +116,17 @@
       <button class="s-btn" id="closeSearch">✕</button>
     </div>
 
+    <div class="expiry-notice">
+      <div class="expiry-dot"></div>
+      Messages are automatically deleted after 1.5 hours
+    </div>
+
     <div id="msgs" class="msgs">
       <div class="ch-welcome">
-        <div id="welcomeTitle" class="ch-welcome-title"># general</div>
-        <div class="ch-welcome-sub">Start of the conversation</div>
+        <div class="ch-welcome-icon" id="welcomeIcon">#</div>
+        <div id="welcomeTitle" class="ch-welcome-title">general</div>
+        <div class="ch-welcome-divider"></div>
+        <div class="ch-welcome-sub">Start of the conversation. Messages disappear after 1.5 hours.</div>
       </div>
       <div id="msgList"></div>
       <div id="typingRow" class="typing-row" style="display:none">
@@ -135,17 +142,23 @@
 
     <div class="input-area">
       <div class="input-bar">
-        <button class="i-btn" id="attachBtn">📎</button>
-        <button class="i-btn" id="imgBtn">🖼</button>
-        <button class="i-btn" id="gifBtn">GIF</button>
-        <button class="i-btn" id="emojiBtn">☺</button>
-        <textarea id="msgInput" rows="1" placeholder="Message…"></textarea>
-        <button class="send-btn" id="sendBtn">
+        <button class="i-btn" id="attachBtn" title="Attach file">📎</button>
+        <button class="i-btn" id="imgBtn" title="Send image">🖼</button>
+        <button class="i-btn" id="gifBtn" title="Send GIF">GIF</button>
+        <button class="i-btn" id="emojiBtn" title="Emoji">☺</button>
+        <div class="input-inner">
+          <textarea id="msgInput" rows="1" placeholder="Message…" maxlength="2000"></textarea>
+          <span id="charCounter" class="char-counter" style="display:none">2000</span>
+        </div>
+        <button class="send-btn" id="sendBtn" title="Send (Enter)">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
         </button>
       </div>
       <input type="file" id="fileInput" multiple style="display:none"/>
       <input type="file" id="imgInput" accept="image/*" multiple style="display:none"/>
+      <div class="input-hint-row">
+        <span><kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> new line</span>
+      </div>
     </div>
   </div>
 </div>

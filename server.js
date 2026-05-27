@@ -162,10 +162,11 @@ io.on('connection', socket => {
     if (!groups[group]) return;
     const g = groups[group];
     if (g.isPrivate && !g.isDefault && g.createdBy!==user.id && !(g.members||[]).includes(user.id)) return;
+    if ((text||'').length > 2000) return; // enforce cap server-side
     const msg = {
       id:uid(), author:user.displayName||user.username, authorId:user.id,
       authorUsername:user.username, color:user.color, avatarEmoji:user.avatarEmoji||'',
-      text:safe(text||''), type:type||'text', content:content||null,
+      text:safe(text||'',2000), type:type||'text', content:content||null,
       fileName:fileName?safe(fileName,255):null, fileSize:fileSize||null,
       altText:altText?safe(altText,100):null, duration:duration||null,
       replyTo:replyTo||null, reactions:{}, ts:Date.now(),
@@ -307,7 +308,7 @@ io.on('connection', socket => {
     const msg = {
       id:uid(), author:user.displayName||user.username, authorId:user.id,
       authorUsername:user.username, color:user.color, avatarEmoji:user.avatarEmoji||'',
-      text:safe(text||''), type:type||'text', content:content||null,
+      text:safe(text||'',2000), type:type||'text', content:content||null,
       fileName:fileName?safe(fileName,255):null, fileSize:fileSize||null,
       altText:altText?safe(altText,100):null, duration:duration||null,
       replyTo:replyTo||null, reactions:{}, ts:Date.now(),
@@ -363,6 +364,42 @@ io.on('connection', socket => {
     console.log(`[-] ${user.username} (${socket.id})`);
   });
 });
+
+// ── Message expiry — purge messages older than 1.5 hours ──────────────
+const EXPIRY_MS = 90 * 60 * 1000; // 1.5 hours
+
+function purgeExpired() {
+  const cutoff = Date.now() - EXPIRY_MS;
+  let changed = false;
+
+  // Channel messages
+  Object.keys(messages).forEach(group => {
+    const before = messages[group].length;
+    const expired = messages[group].filter(m => m.ts < cutoff).map(m => m.id);
+    if (expired.length) {
+      messages[group] = messages[group].filter(m => m.ts >= cutoff);
+      changed = true;
+      if (expired.length) io.to(group).emit('msgsExpired', { group, ids: expired });
+    }
+  });
+
+  // DM messages
+  Object.keys(dmStore).forEach(key => {
+    const expired = dmStore[key].filter(m => m.ts < cutoff).map(m => m.id);
+    if (expired.length) {
+      dmStore[key] = dmStore[key].filter(m => m.ts >= cutoff);
+      const [a, b] = key.split('::');
+      const payload = { isDm: true, dmKey: key, ids: expired };
+      io.to(a).emit('msgsExpired', payload);
+      io.to(b).emit('msgsExpired', payload);
+    }
+  });
+
+  if (changed) saveMessages();
+}
+
+// Run every 3 minutes
+setInterval(purgeExpired, 3 * 60 * 1000);
 
 // ── Self-ping ──────────────────────────────────────────────────────────
 const SELF = process.env.RENDER_EXTERNAL_URL;

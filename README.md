@@ -1,85 +1,56 @@
-# 💬 Chatting Grounds v5
+# 💬 Chatting Grounds v5.2
 
-Real-time chat with accounts, groups, private invites, DMs, and full profile customisation.
+Real-time chat. Deploy free with GitHub + Render.
 
 ---
 
 ## 🚀 Deploy (5 min)
 
-### 1 — Push to GitHub
 ```bash
-git init
-git add .
-git commit -m "Chatting Grounds v5"
+git init && git add . && git commit -m "init"
 git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
 git push -u origin main
 ```
 
-### 2 — Deploy on Render
-1. **render.com** → New → Web Service → connect repo
-2. Settings:
-
-| Field | Value |
-|---|---|
-| Runtime | Node |
-| Build Command | `npm install` |
-| Start Command | `npm start` |
-| Instance Type | Free |
-
-3. Deploy → share the URL ✅
-
-> Free tier sleeps after 15 min idle. Server self-pings every 14 min via `RENDER_EXTERNAL_URL` automatically.
+**Render:** New → Web Service → connect repo → Build: `npm install` · Start: `npm start` · Free tier → Deploy.
 
 ---
 
-## ✨ Features
+## ✅ What's fixed in v5.2
 
-**Accounts**
-- Register with username, display name, password (bcrypt hashed)
-- Set profile colour and avatar emoji on signup
-- Sessions persist in localStorage — no re-login on refresh
+- **All toolbar buttons work** — emoji picker, GIF picker, file/image upload, mute button fixed by moving all listeners into a single `wireAppButtons()` call after the app is shown
+- **Message action buttons fixed** — the root cause was `JSON.stringify()` objects embedded inside `onclick="..."` HTML attributes; double quotes inside JSON break HTML attribute parsing. Completely rewritten using **event delegation** on the message list with **data attributes** only — no JSON in any attribute
+- **Reaction chips fixed** — same issue, same fix
+- **Mute button added** — 🔊/🔇 in sidebar header, toggles all notification sounds
 
-**Groups** (formerly channels)
-- Create public or private groups with name and topic
-- Only `#general` exists by default — create your own
-- Creator can delete their groups (🗑 button in topbar)
-- **Invite system**: share a 6-character invite code, or directly invite online users with a single click
-- Invited users receive a Chromebook-style pop-up with Accept/Decline buttons
-- **Join with code**: ⊕ button in the sidebar to join any group via invite code
-- 🔒 icon on private groups in the sidebar
+## ✨ New in v5.2
 
-**Profile customisation**
-- Edit via ✎ button or clicking your name in the bottom-left
-- **Display name** — what people see in chat (separate from login username)
-- **Bio** — shown on your profile card (up to 160 chars)
-- **Status emoji + text** — shown under your name in the sidebar
-- **Avatar emoji** — replaces your initial letter everywhere
-- **Profile colour** — 12 preset swatches + custom hex input
-- **Banner colour** — 12 dark presets + custom hex for your profile card background
-- Live preview as you edit
-- Click any username in chat to see their profile card
+- **Theme accent colour** — in Profile settings, pick from 12 presets or enter any hex code. Changes buttons, active items, highlights, and badges across the whole app instantly. Live preview before saving. Persisted to your account
+- **Mute sounds** — 🔊 button in sidebar header mutes/unmutes all sound effects
 
-**Messaging**
-- Real-time via WebSockets (Socket.io)
-- Live presence, typing indicators, unread badges
-- Private DMs — click any online user
-- Reactions, reply, delete, search
-- GIFs (Giphy), image upload, file attachments
-- Markdown: `**bold**`, `*italic*`, `` `code` ``, `> quote`, `||spoiler||`
-- Drag & drop, paste images
-- Chromebook-style notifications with on/off toggle
+---
+
+## ✨ Full feature list
+
+- Accounts (username + password, bcrypt) · Sessions persist
+- Groups (public/private) · Invite by 6-char code · Direct invites to online users
+- Direct messages · History stable across reconnects
+- 800 char limit with live counter · Messages auto-expire after 90 min
+- Advanced profiles: display name, bio, status, avatar emoji, profile colour, banner colour, **theme accent colour**
+- GIF picker (Giphy) · Image & file upload · Drag & drop · Paste
+- Reactions · Reply · Delete · Search · Typing indicators
+- Chromebook-style notifications · 🔔 toggle · 🔊 mute toggle
+- Dark minimal design · Mobile responsive
 
 ---
 
 ## 📁 Files
+
 ```
 ├── server.js
 ├── package.json
 ├── .gitignore
-├── data/              ← auto-created, gitignored
-│   ├── users.json
-│   ├── groups.json
-│   └── messages.json
+├── data/           ← auto-created, gitignored
 └── public/
     ├── index.html
     ├── style.css

@@ -9,7 +9,7 @@
 </head>
 <body>
 
-<!-- AUTH ───────────────────────────────────────────────────────────── -->
+<!-- AUTH -->
 <div id="authScreen" class="auth-screen">
   <div class="auth-card">
     <div class="auth-brand"><div class="logo-mark">CG</div><span>Chatting Grounds</span></div>
@@ -17,59 +17,38 @@
       <button class="auth-tab active" data-tab="login">Sign in</button>
       <button class="auth-tab" data-tab="register">Create account</button>
     </div>
-
-    <div class="auth-form" id="loginForm">
+    <div id="loginForm" class="auth-form">
       <label>Username<input id="lUser" type="text" placeholder="Your username" autocomplete="username"/></label>
       <label>Password<input id="lPass" type="password" placeholder="Password" autocomplete="current-password"/></label>
       <div class="form-err" id="lErr"></div>
-      <button class="btn-white full" id="loginBtn">Sign in →</button>
+      <button class="btn-accent full" id="loginBtn">Sign in →</button>
     </div>
-
-    <div class="auth-form hidden" id="regForm">
-      <label>Username<input id="rUser" type="text" placeholder="Pick a username" maxlength="32"/></label>
-      <label>Display name <span class="label-hint">(shown in chat)</span>
-        <input id="rDisplay" type="text" placeholder="How others see you" maxlength="32"/>
-      </label>
+    <div id="regForm" class="auth-form hidden">
+      <label>Username<input id="rUser" type="text" placeholder="e.g. coolperson99" maxlength="32"/></label>
+      <label>Display name <span class="hint">(shown in chat)</span><input id="rDisplay" type="text" placeholder="How others see you" maxlength="32"/></label>
       <label>Password<input id="rPass" type="password" placeholder="At least 4 characters"/></label>
       <label>Confirm password<input id="rPass2" type="password" placeholder="Repeat password"/></label>
-      <label>Profile colour
-        <div class="color-grid" id="regColorGrid">
-          <div class="cswatch active" data-c="#ffffff" style="background:#ffffff"></div>
-          <div class="cswatch" data-c="#60a5fa" style="background:#60a5fa"></div>
-          <div class="cswatch" data-c="#34d399" style="background:#34d399"></div>
-          <div class="cswatch" data-c="#f87171" style="background:#f87171"></div>
-          <div class="cswatch" data-c="#a78bfa" style="background:#a78bfa"></div>
-          <div class="cswatch" data-c="#fb923c" style="background:#fb923c"></div>
-          <div class="cswatch" data-c="#f472b6" style="background:#f472b6"></div>
-          <div class="cswatch" data-c="#facc15" style="background:#facc15"></div>
-          <div class="cswatch" data-c="#2dd4bf" style="background:#2dd4bf"></div>
-          <div class="cswatch" data-c="#e879f9" style="background:#e879f9"></div>
-          <div class="cswatch" data-c="#4ade80" style="background:#4ade80"></div>
-          <div class="cswatch" data-c="#f43f5e" style="background:#f43f5e"></div>
-        </div>
-        <div class="hex-row"><span>Custom hex:</span><input id="rHex" type="text" placeholder="#ffffff" maxlength="7" class="hex-input"/></div>
+      <label>Profile colour<div class="color-grid" id="regColorGrid"></div>
+        <div class="hex-row"><span>Custom:</span><input id="rHex" type="text" placeholder="#ffffff" maxlength="7" class="hex-input"/></div>
       </label>
-      <label>Avatar emoji <span class="label-hint">(optional)</span>
-        <input id="rEmoji" type="text" placeholder="e.g. 🚀" maxlength="4" class="emoji-input"/>
-      </label>
+      <label>Avatar emoji <span class="hint">(optional)</span><input id="rEmoji" type="text" placeholder="🚀" maxlength="4" class="short-input"/></label>
       <div class="form-err" id="rErr"></div>
-      <button class="btn-white full" id="regBtn">Create account →</button>
+      <button class="btn-accent full" id="regBtn">Create account →</button>
     </div>
   </div>
 </div>
 
-<!-- APP ─────────────────────────────────────────────────────────────── -->
+<!-- APP -->
 <div id="app" class="app" style="display:none">
-
   <aside id="sidebar" class="sidebar">
     <div class="sidebar-head">
       <div class="wordmark">CG</div>
-      <div class="head-actions">
+      <div class="head-acts">
         <button id="joinCodeBtn" class="s-btn" title="Join group with code">⊕</button>
-        <button id="notifBtn"   class="s-btn" title="Toggle notifications">🔔</button>
+        <button id="notifBtn"    class="s-btn notif-off" title="Enable notifications">🔕</button>
+        <button id="muteBtn"     class="s-btn" title="Mute sounds">🔊</button>
       </div>
     </div>
-
     <div class="nav-section">
       <div class="nav-label-row">
         <span class="nav-label">Groups</span>
@@ -77,20 +56,17 @@
       </div>
       <div id="groupList" class="nav-list"></div>
     </div>
-
     <div class="nav-section dm-section">
       <div class="nav-label">Direct Messages</div>
       <div id="dmList" class="nav-list"></div>
     </div>
-
-    <div class="me-strip" id="meStrip">
-      <div id="meAvatar" class="me-av"></div>
+    <div class="me-strip" id="meStrip" title="Edit profile">
+      <div id="meAv" class="me-av"></div>
       <div class="me-text">
         <div id="meName" class="me-name">—</div>
-        <div id="meStatus" class="me-sub"></div>
+        <div id="meSub"  class="me-sub">● Online</div>
       </div>
-      <button id="editProfileBtn" class="s-btn" title="Edit profile">✎</button>
-      <button id="logoutBtn"      class="s-btn" title="Sign out">⎋</button>
+      <button id="logoutBtn" class="s-btn" title="Sign out">⎋</button>
     </div>
   </aside>
 
@@ -102,31 +78,22 @@
         <span id="topSub"   class="topbar-sub"></span>
       </div>
       <div class="topbar-r">
-        <button id="inviteBtn" class="invite-btn-pill" style="display:none" title="Invite people">🔗 <span>Invite</span></button>
-        <button id="deleteGrpBtn" class="s-btn danger-btn" style="display:none" title="Delete group">🗑</button>
+        <button id="inviteBtn"    class="s-btn top-action" style="display:none">🔗 Invite</button>
+        <button id="deleteGrpBtn" class="s-btn danger-btn" style="display:none">🗑</button>
         <button id="searchToggle" class="s-btn">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="9" r="6"/><path d="m15 15 3 3"/></svg>
         </button>
         <span id="onlineBadge" class="online-count">0 online</span>
       </div>
     </div>
-
     <div id="searchBar" class="search-bar" style="display:none">
       <input id="searchInput" type="text" placeholder="Search messages…"/>
       <button class="s-btn" id="closeSearch">✕</button>
     </div>
-
-    <div class="expiry-notice">
-      <div class="expiry-dot"></div>
-      Messages are automatically deleted after 1.5 hours
-    </div>
-
     <div id="msgs" class="msgs">
       <div class="ch-welcome">
-        <div class="ch-welcome-icon" id="welcomeIcon">#</div>
-        <div id="welcomeTitle" class="ch-welcome-title">general</div>
-        <div class="ch-welcome-divider"></div>
-        <div class="ch-welcome-sub">Start of the conversation. Messages disappear after 1.5 hours.</div>
+        <div id="welcomeTitle" class="ch-welcome-title"># general</div>
+        <div class="ch-welcome-sub" id="welcomeSub">Start of the conversation</div>
       </div>
       <div id="msgList"></div>
       <div id="typingRow" class="typing-row" style="display:none">
@@ -134,181 +101,139 @@
         <span id="typingText"></span>
       </div>
     </div>
-
     <div id="replyStrip" class="reply-strip" style="display:none">
       <div class="reply-inner"><span class="reply-ic">↩</span><span>Replying to <strong id="replyName"></strong> — <em id="replyQuote" class="reply-q"></em></span></div>
       <button class="s-btn" id="cancelReply">✕</button>
     </div>
-
     <div class="input-area">
-      <div class="input-bar">
+      <div class="input-bar" id="inputBar">
         <button class="i-btn" id="attachBtn" title="Attach file">📎</button>
-        <button class="i-btn" id="imgBtn" title="Send image">🖼</button>
-        <button class="i-btn" id="gifBtn" title="Send GIF">GIF</button>
-        <button class="i-btn" id="emojiBtn" title="Emoji">☺</button>
-        <div class="input-inner">
-          <textarea id="msgInput" rows="1" placeholder="Message…" maxlength="2000"></textarea>
-          <span id="charCounter" class="char-counter" style="display:none">2000</span>
-        </div>
-        <button class="send-btn" id="sendBtn" title="Send (Enter)">
+        <button class="i-btn" id="imgBtn"    title="Image">🖼</button>
+        <button class="i-btn" id="gifBtn"    title="GIF">GIF</button>
+        <button class="i-btn" id="emojiBtn"  title="Emoji">☺</button>
+        <textarea id="msgInput" rows="1" placeholder="Message…"></textarea>
+        <button class="send-btn" id="sendBtn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
         </button>
       </div>
-      <input type="file" id="fileInput" multiple style="display:none"/>
-      <input type="file" id="imgInput" accept="image/*" multiple style="display:none"/>
-      <div class="input-hint-row">
-        <span><kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> new line</span>
+      <div id="charCounter" class="char-counter" style="display:none">
+        <span id="charCount">0</span> / <span id="charMax">800</span>
       </div>
+      <input type="file" id="fileInput" multiple style="display:none"/>
+      <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none"/>
     </div>
   </div>
 </div>
 
-<!-- ── MODALS ─────────────────────────────────────────────────────── -->
-
-<!-- Profile edit -->
+<!-- PROFILE EDIT -->
 <div id="profileOverlay" class="overlay" style="display:none">
   <div class="modal profile-modal">
     <div class="modal-head"><span>Edit Profile</span><button class="s-btn" id="closeProfile">✕</button></div>
-    <div class="profile-banner" id="profileBanner">
-      <div class="profile-av-big" id="profileAvBig"></div>
-    </div>
+    <div id="profileBanner" class="profile-banner"><div id="profileAvBig" class="profile-av-big"></div></div>
     <div class="modal-body">
-      <div class="profile-field-group">
-        <div class="pf-label">Display Name <span class="label-hint">shown in chat</span></div>
-        <input id="pfDisplayName" type="text" maxlength="32" class="modal-input" placeholder="How others see you"/>
+      <div class="pf-group"><div class="pf-label">Display name <span class="hint">shown in chat</span></div>
+        <input id="pfDisplayName" type="text" maxlength="32" class="modal-input" placeholder="How others see you"/></div>
+      <div class="pf-group"><div class="pf-label">Bio <span class="hint">up to 160 chars</span></div>
+        <textarea id="pfBio" maxlength="160" class="modal-input modal-ta" placeholder="Tell people about yourself…"></textarea></div>
+      <div class="pf-two">
+        <div class="pf-group"><div class="pf-label">Status emoji</div><input id="pfStatusEmoji" type="text" maxlength="4" class="modal-input short-input" placeholder="😊"/></div>
+        <div class="pf-group"><div class="pf-label">Status text</div><input id="pfStatusText" type="text" maxlength="80" class="modal-input" placeholder="Working on something…"/></div>
       </div>
-      <div class="profile-field-group">
-        <div class="pf-label">Bio <span class="label-hint">up to 160 chars</span></div>
-        <textarea id="pfBio" maxlength="160" class="modal-input modal-textarea" placeholder="Tell people about yourself…"></textarea>
+      <div class="pf-group"><div class="pf-label">Avatar emoji <span class="hint">overrides your initial</span></div>
+        <input id="pfAvatarEmoji" type="text" maxlength="4" class="modal-input short-input" placeholder="🚀"/></div>
+      <div class="pf-group"><div class="pf-label">Profile colour</div>
+        <div class="color-grid" id="pfColorGrid"></div>
+        <div class="hex-row"><span>Custom:</span><input id="pfHex" type="text" placeholder="#ffffff" maxlength="7" class="hex-input"/></div>
       </div>
-      <div class="profile-two-col">
-        <div class="profile-field-group">
-          <div class="pf-label">Status emoji</div>
-          <input id="pfStatusEmoji" type="text" maxlength="4" class="modal-input emoji-input" placeholder="😊"/>
+      <div class="pf-group"><div class="pf-label">Banner colour</div>
+        <div class="color-grid" id="pfBannerGrid"></div>
+        <div class="hex-row"><span>Custom:</span><input id="pfBannerHex" type="text" placeholder="#111111" maxlength="7" class="hex-input"/></div>
+      </div>
+      <div class="pf-group">
+        <div class="pf-label">Theme accent colour <span class="hint">changes buttons &amp; highlights across the whole app</span></div>
+        <div class="color-grid" id="pfThemeGrid"></div>
+        <div class="hex-row"><span>Custom:</span><input id="pfThemeHex" type="text" placeholder="#5865f2" maxlength="7" class="hex-input"/></div>
+        <div id="themePreview" class="theme-preview">
+          <span class="tp-btn">Button</span>
+          <span class="tp-active">Active item</span>
+          <span class="tp-badge">Badge</span>
         </div>
-        <div class="profile-field-group">
-          <div class="pf-label">Status text</div>
-          <input id="pfStatusText" type="text" maxlength="80" class="modal-input" placeholder="Working on something…"/>
-        </div>
-      </div>
-      <div class="profile-field-group">
-        <div class="pf-label">Avatar emoji <span class="label-hint">overrides initial letter</span></div>
-        <input id="pfAvatarEmoji" type="text" maxlength="4" class="modal-input emoji-input" placeholder="🚀"/>
-      </div>
-      <div class="profile-field-group">
-        <div class="pf-label">Profile colour</div>
-        <div class="color-grid" id="pfColorGrid">
-          <div class="cswatch active" data-c="#ffffff" style="background:#ffffff"></div>
-          <div class="cswatch" data-c="#60a5fa" style="background:#60a5fa"></div>
-          <div class="cswatch" data-c="#34d399" style="background:#34d399"></div>
-          <div class="cswatch" data-c="#f87171" style="background:#f87171"></div>
-          <div class="cswatch" data-c="#a78bfa" style="background:#a78bfa"></div>
-          <div class="cswatch" data-c="#fb923c" style="background:#fb923c"></div>
-          <div class="cswatch" data-c="#f472b6" style="background:#f472b6"></div>
-          <div class="cswatch" data-c="#facc15" style="background:#facc15"></div>
-          <div class="cswatch" data-c="#2dd4bf" style="background:#2dd4bf"></div>
-          <div class="cswatch" data-c="#e879f9" style="background:#e879f9"></div>
-          <div class="cswatch" data-c="#4ade80" style="background:#4ade80"></div>
-          <div class="cswatch" data-c="#f43f5e" style="background:#f43f5e"></div>
-        </div>
-        <div class="hex-row"><span>Custom hex:</span><input id="pfHex" type="text" placeholder="#ffffff" maxlength="7" class="hex-input"/></div>
-      </div>
-      <div class="profile-field-group">
-        <div class="pf-label">Banner colour</div>
-        <div class="color-grid" id="pfBannerGrid">
-          <div class="cswatch active" data-c="#111111" style="background:#111111;border:1px solid #333"></div>
-          <div class="cswatch" data-c="#1a1a2e" style="background:#1a1a2e"></div>
-          <div class="cswatch" data-c="#0f2027" style="background:#0f2027"></div>
-          <div class="cswatch" data-c="#1a0533" style="background:#1a0533"></div>
-          <div class="cswatch" data-c="#0d1b2a" style="background:#0d1b2a"></div>
-          <div class="cswatch" data-c="#1c0a00" style="background:#1c0a00"></div>
-          <div class="cswatch" data-c="#0a1628" style="background:#0a1628"></div>
-          <div class="cswatch" data-c="#12001f" style="background:#12001f"></div>
-          <div class="cswatch" data-c="#001a12" style="background:#001a12"></div>
-          <div class="cswatch" data-c="#1a1200" style="background:#1a1200"></div>
-          <div class="cswatch" data-c="#1a0010" style="background:#1a0010"></div>
-          <div class="cswatch" data-c="#001a1a" style="background:#001a1a"></div>
-        </div>
-        <div class="hex-row"><span>Custom hex:</span><input id="pfBannerHex" type="text" placeholder="#111111" maxlength="7" class="hex-input"/></div>
       </div>
       <div class="form-err" id="pfErr"></div>
-      <button class="btn-white full" id="saveProfileBtn">Save changes</button>
+      <button class="btn-accent full" id="saveProfileBtn">Save changes</button>
     </div>
   </div>
 </div>
 
-<!-- Profile card (view someone else) -->
+<!-- PROFILE CARD -->
+<div id="pcBg" class="pc-bg" style="display:none"></div>
 <div id="profileCard" class="profile-card" style="display:none">
-  <button class="s-btn pc-close" id="closeProfileCard">✕</button>
-  <div class="pc-banner" id="pcBanner"></div>
-  <div class="pc-av" id="pcAv"></div>
+  <button class="s-btn pc-close" id="closeCard">✕</button>
+  <div id="pcBanner" class="pc-banner"></div>
+  <div id="pcAv" class="pc-av"></div>
   <div class="pc-body">
-    <div class="pc-name" id="pcName"></div>
-    <div class="pc-username" id="pcUsername"></div>
-    <div class="pc-status" id="pcStatus"></div>
-    <div class="pc-bio" id="pcBio"></div>
-    <button class="btn-white full pc-dm-btn" id="pcDmBtn">Message</button>
+    <div id="pcName"     class="pc-name"></div>
+    <div id="pcUsername" class="pc-username"></div>
+    <div id="pcStatus"   class="pc-status"></div>
+    <div id="pcBio"      class="pc-bio"></div>
+    <button class="btn-accent full" id="pcDmBtn" style="margin-top:8px">Message</button>
   </div>
 </div>
-<div id="profileCardBg" class="profile-card-bg" style="display:none"></div>
 
-<!-- Create group -->
+<!-- CREATE GROUP -->
 <div id="groupOverlay" class="overlay" style="display:none">
   <div class="modal sm-modal">
     <div class="modal-head"><span>Create Group</span><button class="s-btn" id="closeGroup">✕</button></div>
     <div class="modal-body">
       <label>Group name<input id="gName" type="text" placeholder="e.g. book-club" class="modal-input" maxlength="32"/></label>
-      <label>Topic <span class="label-hint">(optional)</span><input id="gTopic" type="text" placeholder="What's this group about?" class="modal-input" maxlength="120"/></label>
-      <label class="toggle-label">
-        <div>
-          <div>Private group</div>
-          <div class="label-hint">Only invited members can see and join</div>
-        </div>
+      <label>Topic <span class="hint">(optional)</span><input id="gTopic" type="text" placeholder="What's this about?" class="modal-input" maxlength="120"/></label>
+      <label class="toggle-row">
+        <div><div style="font-size:13px;color:var(--tx2)">Private group</div><div class="hint">Only invited members can join</div></div>
         <label class="toggle"><input type="checkbox" id="gPrivate"/><span class="slider"></span></label>
       </label>
       <div class="form-err" id="gErr"></div>
-      <button class="btn-white full" id="createGroupBtn">Create group</button>
+      <button class="btn-accent full" id="createGroupBtn">Create group</button>
     </div>
   </div>
 </div>
 
-<!-- Invite modal -->
+<!-- INVITE -->
 <div id="inviteOverlay" class="overlay" style="display:none">
   <div class="modal sm-modal">
-    <div class="modal-head"><span id="inviteModalTitle">Invite to group</span><button class="s-btn" id="closeInvite">✕</button></div>
+    <div class="modal-head"><span id="inviteTitle">Invite to group</span><button class="s-btn" id="closeInvite">✕</button></div>
     <div class="modal-body">
-      <div class="invite-code-wrap">
+      <div class="invite-box">
         <div class="pf-label">Invite code</div>
-        <div class="invite-code-row">
-          <div id="inviteCodeDisplay" class="invite-code-box">———</div>
-          <button class="btn-ghost" id="copyCodeBtn">Copy</button>
-          <button class="btn-ghost" id="regenCodeBtn" title="Generate new code">↺</button>
+        <div class="invite-row">
+          <div id="inviteCode" class="invite-code">———</div>
+          <button class="btn-ghost sm" id="copyCode">Copy</button>
+          <button class="btn-ghost sm" id="regenCode" title="New code">↺</button>
         </div>
-        <div class="label-hint" style="margin-top:4px">Share this code — anyone with a Chatting Grounds account can use it to join</div>
+        <div class="hint" style="margin-top:6px">Share this — anyone with an account can use it to join</div>
       </div>
-      <div class="invite-divider">or invite someone online directly</div>
+      <div class="divider-text">or invite someone online directly</div>
       <div id="inviteUserList" class="invite-user-list"></div>
     </div>
   </div>
 </div>
 
-<!-- Join via code -->
-<div id="joinCodeOverlay" class="overlay" style="display:none">
+<!-- JOIN VIA CODE -->
+<div id="joinOverlay" class="overlay" style="display:none">
   <div class="modal sm-modal">
-    <div class="modal-head"><span>Join a Group</span><button class="s-btn" id="closeJoinCode">✕</button></div>
+    <div class="modal-head"><span>Join a Group</span><button class="s-btn" id="closeJoin">✕</button></div>
     <div class="modal-body">
-      <label>Invite code<input id="joinCodeInput" type="text" placeholder="e.g. XK9P2M" class="modal-input" maxlength="8" style="text-transform:uppercase;letter-spacing:2px;font-size:18px;font-weight:600;text-align:center"/></label>
-      <div class="form-err" id="joinCodeErr"></div>
-      <button class="btn-white full" id="submitJoinCode">Join group →</button>
+      <label>Invite code<input id="joinCodeInput" type="text" placeholder="e.g. XK9P2M" class="modal-input code-input" maxlength="8"/></label>
+      <div class="form-err" id="joinErr"></div>
+      <button class="btn-accent full" id="submitJoin">Join group →</button>
     </div>
   </div>
 </div>
 
-<!-- GIF modal -->
+<!-- GIF -->
 <div id="gifOverlay" class="overlay" style="display:none">
   <div class="modal gif-modal">
     <div class="modal-head"><span>GIF</span><button class="s-btn" id="closeGif">✕</button></div>
-    <input id="gifSearch" type="text" placeholder="Search Giphy…" class="modal-input" style="margin:10px 14px;width:calc(100% - 28px)"/>
+    <input id="gifSearch" type="text" placeholder="Search Giphy…" class="modal-input" style="margin:10px 14px 0;width:calc(100% - 28px)"/>
     <div class="gif-cats" id="gifCats">
       <button class="gcat active" data-q="trending">Trending</button>
       <button class="gcat" data-q="funny">Funny</button>
@@ -320,47 +245,47 @@
   </div>
 </div>
 
-<!-- File preview -->
+<!-- FILE PREVIEW -->
 <div id="fileOverlay" class="overlay" style="display:none">
   <div class="modal sm-modal">
     <div class="modal-head"><span>Send Files</span><button class="s-btn" id="closeFile">✕</button></div>
     <div class="modal-body">
       <div id="filePreviews" class="file-previews"></div>
-      <label class="add-more-label"><input type="file" id="addMore" multiple style="display:none"/>＋ Add more</label>
+      <label class="add-more-label"><input type="file" id="addMoreInput" multiple style="display:none"/>＋ Add more</label>
       <input id="fileCaption" type="text" placeholder="Add a caption…" class="modal-input"/>
       <div class="modal-btns">
         <button class="btn-ghost" id="cancelFile">Cancel</button>
-        <button class="btn-white" id="sendFile">Send <span id="sendCount"></span></button>
+        <button class="btn-accent" id="sendFileBtn">Send <span id="sendCount"></span></button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Emoji picker -->
+<!-- EMOJI PICKER -->
 <div id="emojiPicker" class="emoji-picker" style="display:none">
   <input id="emojiSearch" type="text" placeholder="Search…"/>
   <div id="emojiGrid" class="emoji-grid"></div>
 </div>
 
-<!-- Context menu -->
+<!-- CTX MENU -->
 <div id="ctx" class="ctx" style="display:none">
-  <button class="ctx-item" data-a="reply">↩  Reply</button>
-  <button class="ctx-item" data-a="react">☺  React</button>
-  <button class="ctx-item" data-a="copy">⎘  Copy</button>
-  <button class="ctx-item danger" data-a="delete">✕  Delete</button>
+  <button class="ctx-item" data-a="reply">↩ Reply</button>
+  <button class="ctx-item" data-a="react">☺ React</button>
+  <button class="ctx-item" data-a="copy">⎘ Copy</button>
+  <button class="ctx-item danger" data-a="delete">✕ Delete</button>
 </div>
 
-<!-- Quick reactions -->
+<!-- QUICK REACT -->
 <div id="qr" class="qr" style="display:none">
   <span data-e="👍">👍</span><span data-e="❤">❤</span><span data-e="😂">😂</span>
   <span data-e="😮">😮</span><span data-e="🔥">🔥</span><span data-e="🎉">🎉</span>
   <span data-e="😢">😢</span><span data-e="✅">✅</span>
 </div>
 
-<!-- Notif banner -->
+<!-- NOTIF BANNER -->
 <div id="notifBanner" class="notif-banner" style="display:none">
   <span>Enable notifications for new messages?</span>
-  <button id="allowNotif" class="btn-white small">Allow</button>
+  <button id="allowNotif" class="btn-accent small">Allow</button>
   <button class="s-btn" id="dismissBanner">✕</button>
 </div>
 
